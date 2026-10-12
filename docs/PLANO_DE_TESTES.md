@@ -78,6 +78,9 @@ Fase 1 implementada. Execução em 2026-10-12, no ambiente de desenvolvimento do
   responde 502). A Caixa é simulada com o formato real da resposta; nenhum teste usa a
   internet. Esse teste revelou que `CONCLUIDA_COM_REJEICOES` não cabia na coluna `status`,
   corrigido pela migração `0002`.
+  Execução no ambiente do usuário (Windows, Python 3.14.8, PostgreSQL 18.6), 2026-10-12:
+  **83 passed**. Primeira carga real pela API da Caixa no mesmo dia: 3.802 concursos
+  inseridos, 0 ignorados, 0 rejeitados.
 - Pendente: T06 (estatísticas).
 
 Validação anterior, da especificação, num PostgreSQL 16 descartável fora do repositório:
