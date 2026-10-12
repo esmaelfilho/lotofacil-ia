@@ -5,6 +5,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 ## [Não lançado]
 
 ### Adicionado
+- Estratégias, geração e conferência de jogos (Fase 4, RF-04 a RF-06): catálogo de 9 regras de
+  faixa (migração de dados `0003`), CRUD de estratégias, geração reproduzível por semente com
+  cópia dos parâmetros (ADR-007), conferência contra um concurso (grava `avaliacoes`) e contra
+  o histórico. Endpoints `/regras`, `/estrategias`, `/geracoes`, `/jogos/conferir-historico`.
+  Aba **Jogos** na tela. Nenhuma tabela nova.
 - Tela no navegador (`frontend/`, React + TypeScript + Vite + Material UI + Recharts): abas
   Concursos (botão "Atualizar concursos", último resultado, lista paginada, histórico),
   Estatísticas (frequência, quentes e frias, atrasos, distribuição, pares e trios, volante de

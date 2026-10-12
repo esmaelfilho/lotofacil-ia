@@ -97,6 +97,19 @@ Fase 1 implementada. Execução em 2026-10-12, no ambiente de desenvolvimento do
   navegador (Chromium) contra o backend real com 3.801 concursos sintéticos e uma Caixa
   simulada: o botão Atualizar inseriu o concurso 3802, todas as abas carregaram e o console
   do navegador não registrou erros.
+- Tela no ambiente do usuário (Windows, Node 24.21.0), 2026-10-12: `npm run test` com
+  **21 passed** e a tela aberta com os concursos reais.
+- Fase 4 (estratégias, geração e conferência), 2026-10-12, no ambiente do assistente:
+  backend **134 testes aprovados** (23 novos) e frontend **27 testes aprovados** (6 novos).
+  Cobrem: catálogo carregado pela migração `0003` (inclusive `downgrade`/`upgrade`); validação
+  de faixas; criar, editar, desativar e excluir estratégia (usada só desativa, 409); geração
+  respeitando obrigatórias, excluídas e todas as faixas, sem jogos repetidos; mesma semente
+  gera os mesmos jogos; cópia dos parâmetros não muda quando a estratégia é editada; regra
+  "repetidas do concurso base"; regras impossíveis não gravam nada (422); conferência contra
+  um concurso grava `avaliacoes` sem duplicar; conferência contra o histórico com valores
+  conferidos à mão; todos os endpoints; e a aba Jogos com API simulada. A aba também foi usada
+  num navegador contra o backend real (3.802 concursos sintéticos): criar estratégia, gerar
+  5 jogos, conferir contra o concurso 3801 e ver o histórico de um jogo, sem erros no console.
 
 Validação anterior, da especificação, num PostgreSQL 16 descartável fora do repositório:
 

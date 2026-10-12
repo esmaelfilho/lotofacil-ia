@@ -237,3 +237,44 @@ endereço só. Uso local por um único usuário, sem login (fora do escopo).
 Para publicar a tela fora do ambiente de desenvolvimento, será preciso servir os arquivos de
 `frontend/dist` atrás do mesmo endereço da API (ou liberar CORS), o que fica para uma nova ADR.
 
+---
+
+## ADR-007 — Geração de jogos por sorteio com filtro e semente registrada
+
+- **Data:** 2026-10-12
+- **Situação:** Aceita
+
+### Contexto
+
+A geração precisa respeitar dezenas obrigatórias, excluídas e as faixas de uma estratégia
+(RF-05.1), não repetir jogos (RF-05.2) e ser reproduzível mesmo que a estratégia mude depois
+(RF-05.3).
+
+### Decisão
+
+- As regras são faixas (mínimo e máximo inclusivos) sobre valores do jogo calculados por
+  `estatisticas/perfil.py` (mesma definição das estatísticas, ADR-005).
+- O serviço sorteia combinações com `random.Random(semente)`: obrigatórias + dezenas
+  sorteadas entre as livres. Mantém as que passam em todas as faixas e ainda não saíram,
+  até a quantidade pedida ou 100.000 tentativas.
+- A `semente` é informada pelo usuário ou sorteada (`SystemRandom`, até 2^53, para caber no
+  JavaScript) e gravada em `geracoes_jogos.semente`. A cópia das regras usadas vai em
+  `geracoes_jogos.parametros`.
+- Se as faixas não permitirem a quantidade pedida, nada é gravado e a resposta informa quantos
+  jogos foram encontrados.
+- Faixas valem para o jogo inteiro: em jogos de 16 a 20 dezenas o usuário ajusta as faixas.
+
+### Justificativa
+
+Simples, sem viés entre os jogos válidos (cada combinação válida tem a mesma chance de ser
+escolhida) e fácil de testar. Com as faixas padrão a taxa de aceitação é alta; 100 jogos levam
+milissegundos. O limite de tentativas impede travar com regras impossíveis (cerca de 2 s no
+pior caso, medido no ambiente do assistente).
+
+### Consequências
+
+- A reprodução exata depende do algoritmo de `random.Random` do Python, estável entre versões
+  do CPython para `sample()` com a mesma semente; a geração grava o nome do algoritmo em
+  `parametros` para registro.
+- Estratégias muito restritivas podem não gerar; a mensagem orienta afrouxar alguma faixa.
+

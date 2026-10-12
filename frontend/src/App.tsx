@@ -12,6 +12,7 @@ import { useState } from 'react'
 import Aviso from './componentes/Aviso'
 import PaginaConcursos from './paginas/PaginaConcursos'
 import PaginaEstatisticas from './paginas/PaginaEstatisticas'
+import PaginaJogos from './paginas/PaginaJogos'
 import PaginaPerfil from './paginas/PaginaPerfil'
 
 const tema = createTheme({
@@ -23,6 +24,7 @@ const ABAS = [
   { nome: 'Concursos', Pagina: PaginaConcursos },
   { nome: 'Estatísticas', Pagina: PaginaEstatisticas },
   { nome: 'Perfil dos concursos', Pagina: PaginaPerfil },
+  { nome: 'Jogos', Pagina: PaginaJogos },
 ]
 
 export default function App() {

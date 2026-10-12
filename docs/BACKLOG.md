@@ -37,15 +37,15 @@ Itens em ordem de prioridade. Estado: `[ ]` a fazer, `[~]` em andamento, `[x]` f
   direto em Python.
 
 ## Fase 4 — Regras, estratégias, geração e avaliação
-- [ ] Carga inicial de `regras_estatisticas` por migração de dados.
-- [ ] CRUD de estratégias.
-- [ ] Geração de jogos reproduzível (semente + cópia dos parâmetros).
-- [ ] Avaliação de jogos e conferência contra o histórico.
+- [x] Carga inicial de `regras_estatisticas` por migração de dados (`0003`).
+- [x] CRUD de estratégias (excluir só se nunca usada; senão, desativar).
+- [x] Geração de jogos reproduzível (semente + cópia dos parâmetros).
+- [x] Avaliação de jogos e conferência contra o histórico.
 
 ## Fase 5 — Frontend
 - [x] Projeto Vite + React + TypeScript + Material UI + Recharts.
 - [x] Telas de concursos (com botão Atualizar), estatísticas e perfil dos concursos.
-- [ ] Telas de estratégias, geração e avaliação (depois da Fase 4).
+- [x] Telas de estratégias, geração e avaliação (aba Jogos).
 - [x] Testes com Vitest.
 
 ## Ideias futuras (fora do escopo atual)

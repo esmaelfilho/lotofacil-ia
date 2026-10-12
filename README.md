@@ -7,7 +7,7 @@ Sistema de análise estatística e geração de jogos da **Lotofácil**.
 
 **Situação:** a base do backend está pronta (configuração, conexão com o PostgreSQL,
 modelos, migrações, endpoint `/saude` e testes) e os concursos já podem ser atualizados pela
-API da Caixa e consultados nas estatísticas, pela API ou pela tela no navegador. A geração de jogos ainda será feita (veja [`docs/BACKLOG.md`](docs/BACKLOG.md)).
+API da Caixa, consultados nas estatísticas e usados para gerar e conferir jogos, pela API ou pela tela no navegador. Próximos passos (veja [`docs/BACKLOG.md`](docs/BACKLOG.md)).
 
 ## Tecnologias
 
@@ -89,7 +89,7 @@ A tela chama `/api/...` e o Vite repassa para o backend em `VITE_API_URL` (padr�
 `http://localhost:8000`), lido do `.env` da raiz ([ADR-006](docs/DECISOES.md)). Abas:
 **Concursos** (botão "Atualizar concursos", último resultado, lista e histórico),
 **Estatísticas** (gráficos, quentes e frias, pares e trios, volante de obrigatórias e
-excluídas) e **Perfil dos concursos**.
+excluídas), **Perfil dos concursos** e **Jogos** (estratégias, geração e conferência).
 
 A aplicação não cria tabelas sozinha: sempre rode `alembic upgrade head` depois de
 atualizar o código. Se não conseguir conectar ao banco, ela encerra com uma mensagem
@@ -125,6 +125,26 @@ o banco:
 
 Os endpoints de distribuição, obrigatórias/excluídas e combinações aceitam `ultimos=N` para
 olhar só os últimos N concursos.
+
+## Gerar e conferir jogos
+
+> Gerar jogos com filtros estatísticos não aumenta a chance de acerto: todas as combinações
+> têm a mesma chance em cada sorteio.
+
+Na aba **Jogos** (ou pela API, seção **jogos** e **estratégias** do `/docs`):
+
+| Endpoint | O que faz |
+|---|---|
+| `GET /regras` | Catálogo de regras (pares, primos, soma, moldura, miolo, maior sequência, Fibonacci, múltiplos de 3, repetidas do concurso base), cada uma com faixa padrão |
+| `GET/POST /estrategias`, `GET/PUT /estrategias/{id}` | Estratégias: conjuntos de regras com mínimo e máximo |
+| `POST /estrategias/{id}/desativar` e `/ativar`, `DELETE /estrategias/{id}` | Uma estratégia já usada só pode ser desativada |
+| `POST /geracoes` | Gera de 1 a 100 jogos de 15 a 20 dezenas, com estratégia, obrigatórias e excluídas; a mesma `semente` reproduz os mesmos jogos |
+| `GET /geracoes`, `GET /geracoes/{id}` | Gerações feitas e seus jogos |
+| `POST /geracoes/{id}/conferir?concurso=N` | Confere os jogos contra um concurso e registra os acertos |
+| `POST /jogos/conferir-historico` | Quantas vezes um jogo teria feito 11 a 15 pontos em todo o histórico |
+
+O catálogo de regras é criado pela migração `0003`: rode `alembic upgrade head` depois de
+atualizar o código.
 
 ## Testes
 

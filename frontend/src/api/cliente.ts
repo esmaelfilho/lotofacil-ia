@@ -3,13 +3,21 @@ import type {
   Atrasos,
   Caracteristica,
   Combinacoes,
+  Conferencia,
+  ConferenciaHistorico,
   Distribuicao,
+  Estrategia,
+  EstrategiaEntrada,
   FiltroDezenas,
   Frequencia,
+  Geracao,
+  GeracaoEntrada,
   Importacao,
   PaginaConcursos,
+  PaginaGeracoes,
   PaginaPerfis,
   QuentesFrias,
+  Regra,
   ResumoAtualizacao,
 } from './tipos'
 
@@ -50,10 +58,17 @@ function mensagemDoErro(corpo: unknown, status: number): string {
   return `A API respondeu com erro ${status}.`
 }
 
-async function pedir<T>(url: string, metodo: 'GET' | 'POST' = 'GET'): Promise<T> {
+type Metodo = 'GET' | 'POST' | 'PUT' | 'DELETE'
+
+async function pedir<T>(url: string, metodo: Metodo = 'GET', corpoJson?: unknown): Promise<T> {
+  const opcoes: RequestInit = { method: metodo, headers: { Accept: 'application/json' } }
+  if (corpoJson !== undefined) {
+    opcoes.headers = { Accept: 'application/json', 'Content-Type': 'application/json' }
+    opcoes.body = JSON.stringify(corpoJson)
+  }
   let resposta: Response
   try {
-    resposta = await fetch(url, { method: metodo, headers: { Accept: 'application/json' } })
+    resposta = await fetch(url, opcoes)
   } catch {
     throw new ErroApi(
       'Não foi possível falar com a API. Confira se o backend (uvicorn) está rodando.',
@@ -85,4 +100,22 @@ export const api = {
     ),
   combinacoes: (tamanho: 2 | 3, quantidade = 10, ultimos?: number | null) =>
     pedir<Combinacoes>(montarUrl('/estatisticas/combinacoes', { tamanho, quantidade, ultimos })),
+
+  regras: () => pedir<Regra[]>(montarUrl('/regras')),
+  estrategias: () => pedir<Estrategia[]>(montarUrl('/estrategias')),
+  criarEstrategia: (entrada: EstrategiaEntrada) =>
+    pedir<Estrategia>(montarUrl('/estrategias'), 'POST', entrada),
+  atualizarEstrategia: (id: number, entrada: EstrategiaEntrada) =>
+    pedir<Estrategia>(montarUrl(`/estrategias/${id}`), 'PUT', entrada),
+  ativarEstrategia: (id: number, ativa: boolean) =>
+    pedir<Estrategia>(montarUrl(`/estrategias/${id}/${ativa ? 'ativar' : 'desativar'}`), 'POST'),
+  excluirEstrategia: (id: number) => pedir<null>(montarUrl(`/estrategias/${id}`), 'DELETE'),
+  gerar: (entrada: GeracaoEntrada) => pedir<Geracao>(montarUrl('/geracoes'), 'POST', entrada),
+  geracoes: (limite = 20, deslocamento = 0) =>
+    pedir<PaginaGeracoes>(montarUrl('/geracoes', { limite, deslocamento })),
+  geracao: (id: number) => pedir<Geracao>(montarUrl(`/geracoes/${id}`)),
+  conferir: (id: number, concurso: number) =>
+    pedir<Conferencia>(montarUrl(`/geracoes/${id}/conferir`, { concurso }), 'POST'),
+  conferirHistorico: (dezenas: number[]) =>
+    pedir<ConferenciaHistorico>(montarUrl('/jogos/conferir-historico'), 'POST', { dezenas }),
 }

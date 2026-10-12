@@ -2,13 +2,15 @@ import Box from '@mui/material/Box'
 
 import { formatarDezena } from '../util/formatar'
 
-export type Marcacao = 'normal' | 'obrigatoria' | 'excluida' | 'vazia'
+export type Marcacao = 'normal' | 'obrigatoria' | 'excluida' | 'vazia' | 'acerto' | 'apagada'
 
 const CORES: Record<Marcacao, { fundo: string; texto: string; borda: string }> = {
   normal: { fundo: 'primary.main', texto: 'primary.contrastText', borda: 'primary.main' },
   obrigatoria: { fundo: 'success.main', texto: 'success.contrastText', borda: 'success.main' },
   excluida: { fundo: 'error.main', texto: 'error.contrastText', borda: 'error.main' },
   vazia: { fundo: 'transparent', texto: 'text.primary', borda: 'divider' },
+  acerto: { fundo: 'success.main', texto: 'success.contrastText', borda: 'success.main' },
+  apagada: { fundo: 'transparent', texto: 'text.secondary', borda: 'divider' },
 }
 
 interface Props {
@@ -45,11 +47,26 @@ export default function Bolinha({ dezena, marcacao = 'normal', tamanho = 34 }: P
   )
 }
 
-export function Dezenas({ dezenas, tamanho }: { dezenas: number[]; tamanho?: number }) {
+/** Dezenas em bolinhas. Com `destaque`, as dezenas destacadas ficam verdes e as outras apagadas. */
+export function Dezenas({
+  dezenas,
+  tamanho,
+  destaque,
+}: {
+  dezenas: number[]
+  tamanho?: number
+  destaque?: number[]
+}) {
+  const destacadas = destaque ? new Set(destaque) : null
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }} aria-label="dezenas">
       {dezenas.map((d) => (
-        <Bolinha key={d} dezena={d} tamanho={tamanho} />
+        <Bolinha
+          key={d}
+          dezena={d}
+          tamanho={tamanho}
+          marcacao={destacadas ? (destacadas.has(d) ? 'acerto' : 'apagada') : 'normal'}
+        />
       ))}
     </Box>
   )

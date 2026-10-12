@@ -42,8 +42,11 @@ lotofacil-ia/
 │   │   ├── services/
 │   │   │   ├── estatisticas/    # frequencia, atraso, perfil, combinacoes...
 │   │   │   ├── atualizacao.py   # busca na Caixa os concursos que faltam e grava
-│   │   │   ├── geracao.py
-│   │   │   └── avaliacao.py
+│   │   │   ├── regras.py        # faixas aplicadas a um jogo (usa estatisticas/perfil.py)
+│   │   │   ├── estrategias.py
+│   │   │   ├── geracao.py       # sorteio com filtro, semente, cópia dos parâmetros
+│   │   │   ├── avaliacao.py     # conferência contra um concurso e contra o histórico
+│   │   │   └── erros.py         # ErroDeNegocio (422), NaoEncontrado (404), Conflito (409)
 │   │   └── api/routers/         # concursos, estatisticas, estrategias, geracoes...
 │   ├── tests/
 │   │   ├── unit/                # sem banco
@@ -85,6 +88,20 @@ lotofacil-ia/
 - O lifespan também verifica se o banco está na última revisão do Alembic e avisa quando
   houver migrações pendentes; ele **não** as aplica automaticamente.
 
+### Estratégias, geração e conferência
+
+- **Regras** (`services/regras.py`): cada regra é uma faixa (mínimo e máximo) sobre um valor do
+  jogo calculado com `estatisticas/perfil.py`, a mesma definição das estatísticas. O catálogo
+  (nomes e faixas padrão) está na tabela `regras_estatisticas`, carregada pela migração `0003`.
+- **Geração** (`services/geracao.py`): sorteia combinações com `random.Random(semente)` e mantém
+  só as que respeitam obrigatórias, excluídas e todas as faixas, sem repetir jogo (ADR-007).
+  Até 100 jogos por geração e 100.000 tentativas; se não houver jogos suficientes, nada é
+  gravado e a resposta explica. A geração grava uma cópia das regras usadas.
+- **Conferência** (`services/avaliacao.py`): contra um concurso grava `avaliacoes`; contra o
+  histórico só consulta.
+- Os serviços lançam `ErroDeNegocio`, `NaoEncontrado` e `Conflito`; os routers os traduzem em
+  422, 404 e 409 (`app/api/erros.py`).
+
 ### Estatísticas
 
 `app/services/estatisticas/` agrupa os cálculos por tema: `frequencia.py` (frequência,
@@ -110,7 +127,8 @@ diretamente. O aviso sobre a independência dos sorteios aparece no topo de toda
   só variáveis `VITE_`). O backend não precisa de CORS (ADR-006).
 - **Estrutura:** `src/api/` (cliente `fetch`, tipos das respostas, hook `useDados`),
   `src/componentes/` (bolinhas das dezenas, volante 5×5, gráfico de barras, seção, estados de
-  carregando/erro), `src/paginas/` (Concursos, Estatísticas, Perfil) e `src/util/`
+  carregando/erro), `src/paginas/` (Concursos, Estatísticas, Perfil e Jogos, com os componentes da aba Jogos em
+  `src/paginas/jogos/`) e `src/util/`
   (formatação em português). Abas do Material UI, sem roteador.
 - **Erros:** mensagens da API (`detail`) aparecem na tela; backend desligado mostra a
   orientação de iniciar o `uvicorn` e um botão "Tentar de novo".

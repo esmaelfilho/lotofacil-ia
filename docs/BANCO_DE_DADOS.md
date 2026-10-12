@@ -118,7 +118,12 @@ Novos índices exigem uma consulta real com `EXPLAIN ANALYZE` que mostre o ganho
 O esquema é criado pela migração `backend/migrations/versions/0001_esquema_inicial.py`. O SQL
 abaixo é exatamente o que ela executa, gerado com `alembic upgrade 0001 --sql`. A migração
 `0002` aumentou `historico_importacoes.status` para `varchar(30)`, porque
-`CONCLUIDA_COM_REJEICOES` não cabia em 20 caracteres. A função é
+`CONCLUIDA_COM_REJEICOES` não cabia em 20 caracteres. A migração `0003` é só de dados: carrega
+o catálogo de `regras_estatisticas` (9 regras de faixa: `pares`, `primos`, `soma`, `moldura`,
+`miolo`, `maior_sequencia`, `fibonacci`, `multiplos_de_3`, `repetidas_do_concurso_base`, com
+`parametros_padrao` no formato `{"minimo": n, "maximo": n}`), usando `ON CONFLICT (codigo) DO
+NOTHING`; o `downgrade` apaga essas regras e falha, de propósito, se alguma estratégia ainda
+as usa. A função é
 criada com `op.execute()` antes das tabelas, porque o autogenerate do Alembic não detecta
 funções; o `downgrade` remove as tabelas e depois a função. Os nomes de restrições e índices
 seguem a convenção da seção 8.
@@ -432,6 +437,19 @@ parâmetros da consulta.
 A estatística correspondente mostra, para um conjunto informado, em quantos concursos
 históricos todas as obrigatórias saíram e nenhuma excluída saiu (`dezenas @> :obrigatorias
 AND NOT dezenas && :excluidas`).
+
+### Formato dos parâmetros (JSONB)
+
+- `regras_estatisticas.parametros_padrao` e `estrategia_regras.parametros`:
+  `{"minimo": 7, "maximo": 8}` (inteiros, faixa inclusiva).
+- `geracoes_jogos.parametros` (cópia feita no momento da geração):
+  `{"versao": 1, "estrategia": {"id": 1, "nome": "..."} | null, "regras": [{"codigo": "pares",
+  "nome": "Pares", "minimo": 7, "maximo": 8}, ...], "algoritmo": "sorteio com filtro
+  (random.Random)"}`. A `semente` fica na coluna própria.
+
+A conferência contra o histórico usa a consulta "Conferência de um jogo contra todo o
+histórico" acima (agrupando todas as quantidades de acertos). A conferência contra um concurso
+grava em `avaliacoes` com `ON CONFLICT (jogo_id, concurso_id) DO NOTHING`.
 
 ## 7. Cache e pré-cálculo
 

@@ -165,3 +165,106 @@ export const CARACTERISTICAS = {
 } as const
 
 export type Caracteristica = keyof typeof CARACTERISTICAS
+
+// ---------- Fase 4: regras, estratégias, gerações e conferência ----------
+
+export interface Regra {
+  codigo: string
+  nome: string
+  descricao: string | null
+  parametros_padrao: { minimo: number; maximo: number }
+  ativa: boolean
+}
+
+export interface Faixa {
+  codigo: string
+  minimo: number
+  maximo: number
+}
+
+export interface FaixaComNome extends Faixa {
+  nome: string
+}
+
+export interface EstrategiaEntrada {
+  nome: string
+  descricao?: string | null
+  regras: Faixa[]
+}
+
+export interface Estrategia {
+  id: number
+  nome: string
+  descricao: string | null
+  ativa: boolean
+  criada_em: string
+  atualizada_em: string
+  usada: boolean
+  regras: FaixaComNome[]
+}
+
+export interface GeracaoEntrada {
+  estrategia_id?: number | null
+  quantidade: number
+  dezenas_por_jogo: number
+  obrigatorias: number[]
+  excluidas: number[]
+  concurso_base?: number | null
+  semente?: number | null
+}
+
+export interface JogoGerado {
+  id: number
+  sequencia: number
+  dezenas: number[]
+  perfil: Perfil
+  repetidas_do_concurso_base: number
+}
+
+export interface GeracaoResumo {
+  id: number
+  criada_em: string
+  estrategia_id: number | null
+  estrategia_nome: string | null
+  concurso_base: number
+  quantidade_jogos: number
+  dezenas_por_jogo: number
+  obrigatorias: number[]
+  excluidas: number[]
+  regras: FaixaComNome[]
+  semente: number | null
+}
+
+export interface Geracao extends GeracaoResumo {
+  tentativas: number | null
+  jogos: JogoGerado[]
+}
+
+export interface PaginaGeracoes {
+  total: number
+  itens: GeracaoResumo[]
+}
+
+export interface JogoConferido {
+  jogo_id: number
+  sequencia: number
+  dezenas: number[]
+  acertos: number
+  dezenas_acertadas: number[]
+}
+
+export interface Conferencia {
+  geracao_id: number
+  concurso: number
+  dezenas_sorteadas: number[]
+  jogos: JogoConferido[]
+  por_acertos: Record<string, number>
+}
+
+export interface ConferenciaHistorico {
+  dezenas: number[]
+  concursos: number
+  por_acertos: Record<string, number>
+  maior_acerto: number | null
+  ultimo_concurso_com_11_ou_mais: number | null
+}
