@@ -116,7 +116,9 @@ Novos índices exigem uma consulta real com `EXPLAIN ANALYZE` que mostre o ganho
 ## 4. Esquema de referência
 
 O esquema é criado pela migração `backend/migrations/versions/0001_esquema_inicial.py`. O SQL
-abaixo é exatamente o que ela executa, gerado com `alembic upgrade head --sql`. A função é
+abaixo é exatamente o que ela executa, gerado com `alembic upgrade 0001 --sql`. A migração
+`0002` aumentou `historico_importacoes.status` para `varchar(30)`, porque
+`CONCLUIDA_COM_REJEICOES` não cabia em 20 caracteres. A função é
 criada com `op.execute()` antes das tabelas, porque o autogenerate do Alembic não detecta
 funções; o `downgrade` remove as tabelas e depois a função. Os nomes de restrições e índices
 seguem a convenção da seção 8.
@@ -263,6 +265,31 @@ CREATE INDEX ix_avaliacoes_concurso_id ON avaliacoes (concurso_id);
 ```
 
 ## 5. Importação idempotente
+
+### 5.1 Pela API da Caixa (implementada)
+
+Serviço `backend/app/services/atualizacao.py`, usado pelo endpoint `POST /concursos/atualizar`
+e pelo comando `python -m app.comandos.atualizar_concursos`:
+
+1. Consulta o último concurso na Caixa (`GET .../lotofacil`).
+2. Calcula os números que faltam com
+   `SELECT n FROM generate_series(1, :ultimo) n EXCEPT SELECT numero FROM concursos`
+   (cobre concursos novos e lacunas).
+3. Cria o registro em `historico_importacoes` (`origem = 'API'`) numa transação própria.
+4. Busca cada concurso (`GET .../lotofacil/{numero}`), com pausa entre pedidos e novas
+   tentativas em falhas temporárias. Usa `listaDezenas` (ordenada); a ordem do sorteio não é
+   guardada. As dezenas passam pela mesma validação do backend antes de gravar.
+5. Grava com `INSERT ... ON CONFLICT (numero) DO NOTHING RETURNING numero`, em lotes de 50,
+   cada lote na sua transação.
+6. Concurso inexistente (404) ou com dados inválidos é **rejeitado** e a execução continua.
+   Falha de comunicação depois das tentativas **interrompe** a execução: os lotes gravados
+   ficam, o histórico fica `FALHOU` com o motivo e a próxima execução continua de onde parou.
+7. Ao final: `CONCLUIDA`, `CONCLUIDA_COM_REJEICOES` ou `FALHOU`, com `finalizada_em`.
+
+Duas execuções ao mesmo tempo não duplicam concursos (o `ON CONFLICT` garante); apenas
+fariam pedidos repetidos à Caixa.
+
+### 5.2 Por arquivo (previsto)
 
 1. Cria um registro em `historico_importacoes` com `status = 'EM_ANDAMENTO'` e o
    `hash_conteudo` (SHA-256) do arquivo ou resposta, numa transação própria.

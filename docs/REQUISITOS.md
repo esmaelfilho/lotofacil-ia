@@ -17,14 +17,22 @@ sorteadas por concurso). Uso por um único usuário, sem login nesta versão.
 - RF-01.4 Listar concursos com filtro por número e por período, ordenados por número.
 
 ### RF-02 Importação
-- RF-02.1 Importar resultados históricos de arquivo (e, futuramente, de fonte externa).
+- RF-02.1 Atualizar os concursos pela API de resultados da Caixa, buscando somente os que
+  faltam no banco (do concurso 1 até o último sorteado, incluindo lacunas). Disponível como
+  endpoint `POST /concursos/atualizar` (o "botão Atualizar") e como comando de terminal para a
+  primeira carga. Importação de arquivo (planilha ou CSV) fica como alternativa futura.
 - RF-02.2 A importação é idempotente: reimportar o mesmo conteúdo não duplica nem altera
   concursos.
 - RF-02.3 Concurso existente com dados divergentes não é sobrescrito; a divergência é
   reportada.
 - RF-02.4 Cada importação fica registrada com origem, data, situação e totais de lidos,
   inseridos, ignorados e rejeitados.
-- RF-02.5 Falha durante a importação desfaz os dados daquela importação e registra o erro.
+- RF-02.5 Falha durante a importação registra o erro no histórico. Na importação pela API, os
+  concursos são gravados em lotes: se a Caixa parar de responder no meio, os lotes já gravados
+  (concursos completos e válidos) são mantidos e a próxima execução continua de onde parou
+  (ADR-004). Um lote com erro é desfeito por inteiro.
+- RF-02.6 Cada execução busca no máximo um número configurável de concursos (padrão 300 pelo
+  endpoint), informando quantos ainda faltam.
 
 ### RF-03 Estatísticas
 Todas calculadas a partir dos concursos históricos:

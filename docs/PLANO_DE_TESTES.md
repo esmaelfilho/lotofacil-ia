@@ -67,8 +67,18 @@ Fase 1 implementada. Execução em 2026-10-12, no ambiente de desenvolvimento do
 - Cobertos: T01, T02, T05, T09 e a parte de banco de T03, T04 e T07 (`ON CONFLICT`).
 - Travas verificadas: banco sem sufixo `_test` e `TEST_DATABASE_URL` igual a `DATABASE_URL`
   interrompem a suíte; sem `TEST_DATABASE_URL`, os 35 de integração são ignorados com motivo.
-- Pendente: executar no ambiente do usuário (Windows, Python 3.14, PostgreSQL 18) e os casos
-  T06, T07 completo e T08, que dependem dos serviços de estatística e importação.
+- Execução no ambiente do usuário (Windows, Python 3.14.8, PostgreSQL 18.6), 2026-10-12:
+  **62 passed**. Dois ajustes vieram dessa execução: reconhecer mensagens do PostgreSQL em
+  português com acentos corrompidos e aceitar "tempo esgotado" como causa de servidor
+  indisponível no Windows.
+- Fase 2 (atualização pela API da Caixa), 2026-10-12, no ambiente do assistente:
+  **83 testes aprovados**. Cobrem T07 (primeira carga, segunda execução sem duplicar, lacunas,
+  limite por execução) e T08 (falha no meio mantém os lotes gravados, registra `FALHOU` e a
+  execução seguinte continua; rejeição de concurso inválido ou inexistente; Caixa fora do ar
+  responde 502). A Caixa é simulada com o formato real da resposta; nenhum teste usa a
+  internet. Esse teste revelou que `CONCLUIDA_COM_REJEICOES` não cabia na coluna `status`,
+  corrigido pela migração `0002`.
+- Pendente: T06 (estatísticas).
 
 Validação anterior, da especificação, num PostgreSQL 16 descartável fora do repositório:
 

@@ -35,9 +35,13 @@ lotofacil-ia/
 │   │   ├── models/              # modelos SQLAlchemy, agrupados por assunto
 │   │   ├── schemas/             # modelos Pydantic de entrada e saída
 │   │   ├── repositories/        # acesso a dados
+│   │   ├── integracoes/
+│   │   │   └── caixa.py         # cliente da API de resultados da Caixa
+│   │   ├── comandos/
+│   │   │   └── atualizar_concursos.py  # primeira carga pelo terminal, com progresso
 │   │   ├── services/
 │   │   │   ├── estatisticas/    # frequencia, atraso, perfil, combinacoes...
-│   │   │   ├── importacao.py
+│   │   │   ├── atualizacao.py   # busca na Caixa os concursos que faltam e grava
 │   │   │   ├── geracao.py
 │   │   │   └── avaliacao.py
 │   │   └── api/routers/         # concursos, estatisticas, estrategias, geracoes...

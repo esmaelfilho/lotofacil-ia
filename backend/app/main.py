@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api.routers import saude
+from app.api.routers import concursos, importacoes, saude
 from app.core.config import ConfiguracaoInvalida, Settings, mascarar_url, obter_configuracoes
 from app.core.logging import configurar_logs
 from app.db.session import criar_engine, criar_fabrica_de_sessoes
@@ -47,6 +47,7 @@ def criar_app(configuracoes: Settings | None = None) -> FastAPI:
                 atual or "(vazio)",
                 mais_recente,
             )
+        app.state.configuracoes = cfg
         app.state.engine = engine
         app.state.fabrica_de_sessoes = criar_fabrica_de_sessoes(engine)
         log.info("API pronta.")
@@ -63,6 +64,8 @@ def criar_app(configuracoes: Settings | None = None) -> FastAPI:
         lifespan=ciclo_de_vida,
     )
     app.include_router(saude.router)
+    app.include_router(concursos.router)
+    app.include_router(importacoes.router)
     return app
 
 

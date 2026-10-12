@@ -6,8 +6,8 @@ Sistema de análise estatística e geração de jogos da **Lotofácil**.
 > aumentam a chance de acerto.
 
 **Situação:** a base do backend está pronta (configuração, conexão com o PostgreSQL,
-modelos, migração inicial, endpoint `/saude` e testes). Importação, estatísticas, geração de
-jogos e o frontend ainda serão feitos (veja [`docs/BACKLOG.md`](docs/BACKLOG.md)).
+modelos, migrações, endpoint `/saude` e testes) e os concursos já podem ser atualizados pela
+API da Caixa. Estatísticas, geração de jogos e o frontend ainda serão feitos (veja [`docs/BACKLOG.md`](docs/BACKLOG.md)).
 
 ## Tecnologias
 
@@ -85,6 +85,19 @@ npm run dev                          # http://localhost:5173
 A aplicação não cria tabelas sozinha: sempre rode `alembic upgrade head` depois de
 atualizar o código. Se não conseguir conectar ao banco, ela encerra com uma mensagem
 indicando host, porta, banco e a causa provável, sem mostrar a senha.
+
+## Atualizar os concursos
+
+Os resultados vêm da API de resultados da Caixa ([ADR-004](docs/DECISOES.md)). São buscados
+somente os concursos que ainda não estão no banco.
+
+```powershell
+cd backend
+python -m app.comandos.atualizar_concursos   # primeira carga (milhares de concursos), com progresso
+```
+
+Depois, para buscar os novos, use `POST /concursos/atualizar` em http://localhost:8000/docs
+(ou rode o comando de novo). Pode repetir à vontade: nada é duplicado.
 
 ## Testes
 

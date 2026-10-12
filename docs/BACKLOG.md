@@ -23,9 +23,13 @@ Itens em ordem de prioridade. Estado: `[ ]` a fazer, `[~]` em andamento, `[x]` f
 - [ ] `docker-compose.yml` opcional só com o PostgreSQL de desenvolvimento e de teste.
 
 ## Fase 2 — Concursos e importação
-- [ ] CRUD de concursos (T03, T04).
-- [ ] Importação idempotente com histórico (T07, T08).
-- [ ] Definir o formato do arquivo de importação (planilha oficial da Caixa ou CSV próprio).
+- [x] Fonte definida: API de resultados da Caixa (ADR-004).
+- [x] Atualização idempotente pela API, com histórico, lotes e retomada (T07, T08).
+- [x] Endpoints `POST /concursos/atualizar`, `GET /concursos`, `GET /concursos/{numero}` e
+      `GET /importacoes`.
+- [x] Comando `python -m app.comandos.atualizar_concursos` para a primeira carga.
+- [ ] Botão "Atualizar" na interface (Fase 5).
+- [ ] Importação por arquivo (planilha da Caixa ou CSV) como alternativa, se a API mudar.
 
 ## Fase 3 — Estatísticas
 - [ ] Serviços de estatística (RF-03.1 a RF-03.13) e endpoints.

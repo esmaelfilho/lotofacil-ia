@@ -33,7 +33,7 @@ class HistoricoImportacao(Base):
     origem: Mapped[str] = mapped_column(String(20))
     referencia: Mapped[str] = mapped_column(String(255))
     hash_conteudo: Mapped[str | None] = mapped_column(String(64))
-    status: Mapped[str] = mapped_column(String(20), server_default="EM_ANDAMENTO")
+    status: Mapped[str] = mapped_column(String(30), server_default="EM_ANDAMENTO")
     total_lidos: Mapped[int] = mapped_column(Integer, server_default="0")
     total_inseridos: Mapped[int] = mapped_column(Integer, server_default="0")
     total_ignorados: Mapped[int] = mapped_column(Integer, server_default="0")

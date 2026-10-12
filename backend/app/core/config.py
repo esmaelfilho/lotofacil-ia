@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     database_connect_timeout: int = Field(default=5, ge=1, le=60)
     app_env: Literal["desenvolvimento", "teste", "producao"] = "desenvolvimento"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    caixa_api_url: str = "https://servicebus2.caixa.gov.br/portaldeloterias/api/lotofacil"
+    caixa_pausa_segundos: float = Field(default=0.3, ge=0, le=10)
+    caixa_timeout_segundos: float = Field(default=15, gt=0, le=120)
 
     @field_validator("database_url")
     @classmethod

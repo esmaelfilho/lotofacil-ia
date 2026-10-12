@@ -133,3 +133,43 @@ histórico inteiro. O volume real cresce cerca de 300 concursos por ano.
 Se trios ou outra estatística ficarem lentos em produção, a solução prevista é uma
 *materialized view* atualizada (`REFRESH MATERIALIZED VIEW CONCURRENTLY`) ao final de cada
 importação concluída, registrada numa nova ADR com a medição que a justificou.
+
+---
+
+## ADR-004 — Concursos atualizados pela API de resultados da Caixa
+
+- **Data:** 2026-10-12
+- **Situação:** Aceita
+
+### Contexto
+
+O usuário quer um botão que atualize os concursos a partir do último cadastrado, sem baixar
+planilhas manualmente.
+
+### Decisão
+
+- Fonte: `https://servicebus2.caixa.gov.br/portaldeloterias/api/lotofacil` (último concurso) e
+  `.../lotofacil/{numero}` (concurso específico), configuráveis por `CAIXA_API_URL`.
+- São buscados apenas os números que faltam no banco, de 1 até o último sorteado.
+- Cliente HTTP da biblioteca padrão (`urllib`), usando os certificados e o proxy do sistema;
+  pausa entre pedidos (`CAIXA_PAUSA_SEGUNDOS`, padrão 0,3 s) e até 3 tentativas.
+- Gravação em lotes de 50 com `ON CONFLICT DO NOTHING`; cada lote é uma transação.
+- Primeira carga pelo comando `python -m app.comandos.atualizar_concursos`, que mostra o
+  progresso; atualizações seguintes pelo endpoint `POST /concursos/atualizar` (padrão de 300
+  concursos por chamada).
+
+### Justificativa
+
+Atualização em um passo, sem arquivos manuais. Lotes independentes evitam perder minutos de
+download se a conexão cair perto do fim; como cada concurso gravado é completo e validado
+(pelo backend e pelo `CHECK` do banco), mantê-los não compromete a integridade.
+
+### Consequências
+
+- A API **não é documentada oficialmente**: pode mudar de formato, ficar fora do ar ou
+  bloquear acessos. O sistema valida tudo o que recebe, informa o problema com clareza e não
+  altera concursos já gravados. Uma importação por arquivo continua prevista como alternativa.
+- Diferença em relação à ideia original de "desfazer tudo em caso de falha": na fonte API, só
+  o lote com erro é desfeito (RF-02.5 atualizado).
+- Os testes nunca acessam a internet: usam uma Caixa simulada com o formato real da resposta
+  (`backend/tests/dados/caixa_lotofacil_3802.json`).
