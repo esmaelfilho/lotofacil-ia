@@ -81,7 +81,12 @@ Fase 1 implementada. Execução em 2026-10-12, no ambiente de desenvolvimento do
   Execução no ambiente do usuário (Windows, Python 3.14.8, PostgreSQL 18.6), 2026-10-12:
   **83 passed**. Primeira carga real pela API da Caixa no mesmo dia: 3.802 concursos
   inseridos, 0 ignorados, 0 rejeitados.
-- Pendente: T06 (estatísticas).
+- Fase 3 (estatísticas), 2026-10-12, no ambiente do assistente: **111 testes aprovados**.
+  T06 coberto de duas formas: um conjunto de 4 concursos com lacuna na numeração e uma dezena
+  que nunca saiu, com valores conferidos à mão (`tests/estatisticas_conhecidas.py`); e 297
+  concursos aleatórios com semente fixa, comparando frequência, atrasos, pares, trios,
+  distribuição e obrigatórias/excluídas com um cálculo direto em Python. Também: banco vazio,
+  filtros inválidos (422) e todos os endpoints.
 
 Validação anterior, da especificação, num PostgreSQL 16 descartável fora do repositório:
 

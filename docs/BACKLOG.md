@@ -32,8 +32,9 @@ Itens em ordem de prioridade. Estado: `[ ]` a fazer, `[~]` em andamento, `[x]` f
 - [ ] Importação por arquivo (planilha da Caixa ou CSV) como alternativa, se a API mudar.
 
 ## Fase 3 — Estatísticas
-- [ ] Serviços de estatística (RF-03.1 a RF-03.13) e endpoints.
-- [ ] Testes T06 com conjunto de concursos de valores conhecidos.
+- [x] Serviços de estatística (RF-03.1 a RF-03.13) e endpoints `/estatisticas/...`.
+- [x] Testes T06 com conjunto de concursos de valores conhecidos e comparação com cálculo
+  direto em Python.
 
 ## Fase 4 — Regras, estratégias, geração e avaliação
 - [ ] Carga inicial de `regras_estatisticas` por migração de dados.

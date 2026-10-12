@@ -356,7 +356,9 @@ Uma dezena que nunca saiu não aparece no resultado; o serviço completa as 25 d
 (atraso = total de concursos).
 
 **Perfil de cada concurso** (pares, primos, soma, miolo, Fibonacci, múltiplos de 3), < 1 ms
-por concurso:
+por concurso. Referência: na implementação, o perfil é calculado em Python sobre as dezenas
+lidas (ADR-005); as consultas de perfil, linha, sequência e repetição abaixo ficam como
+definição equivalente:
 
 ```sql
 SELECT numero,

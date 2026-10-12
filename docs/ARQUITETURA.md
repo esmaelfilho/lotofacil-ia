@@ -87,11 +87,16 @@ lotofacil-ia/
 
 ### Estatísticas
 
-`app/services/estatisticas/` agrupa os cálculos por tema (frequência e janelas, atraso,
-perfil do concurso, linhas e colunas, sequências, repetição, combinações). Cada serviço
-executa consultas SQL agregadas (veja `BANCO_DE_DADOS.md`, seção 6) e devolve modelos
-Pydantic. Cálculos sobre um jogo isolado (ex.: perfil de um jogo gerado) usam funções Python
-puras compartilhadas, testadas sem banco, com as mesmas definições do SQL.
+`app/services/estatisticas/` agrupa os cálculos por tema: `frequencia.py` (frequência,
+janelas, quentes e frias), `atraso.py`, `combinacoes.py` (pares e trios), `filtros.py`
+(obrigatórias e excluídas), `perfil.py` (perfil de uma lista de dezenas, funções puras) e
+`distribuicao.py` (perfil de cada concurso e distribuição das características). Os serviços
+devolvem modelos Pydantic (`app/schemas/estatisticas.py`) e os endpoints ficam em
+`app/api/routers/estatisticas.py`.
+
+Agregações sobre o histórico são consultas SQL (veja `BANCO_DE_DADOS.md`, seção 6). O perfil
+é calculado em Python sobre as dezenas lidas, para que a mesma função sirva aos concursos e
+aos jogos gerados (ADR-005).
 
 Não há tabelas de pré-cálculo (ADR-003).
 

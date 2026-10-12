@@ -5,6 +5,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 ## [Não lançado]
 
 ### Adicionado
+- Estatísticas (Fase 3, RF-03.1 a RF-03.13): endpoints `GET /estatisticas/frequencia`,
+  `/quentes-frias`, `/atrasos`, `/perfil`, `/distribuicao`, `/obrigatorias-excluidas` e
+  `/combinacoes`. Frequência, atraso e combinações em SQL; perfil dos concursos em Python
+  (ADR-005). Sem migração e sem tabela nova (ADR-003).
 - Atualização dos concursos pela API de resultados da Caixa (ADR-004): busca só os que
   faltam, grava em lotes com `ON CONFLICT`, registra em `historico_importacoes` e continua de
   onde parou após falhas. Endpoints `POST /concursos/atualizar`, `GET /concursos`,

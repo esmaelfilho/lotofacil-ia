@@ -173,3 +173,38 @@ download se a conexão cair perto do fim; como cada concurso gravado é completo
   o lote com erro é desfeito (RF-02.5 atualizado).
 - Os testes nunca acessam a internet: usam uma Caixa simulada com o formato real da resposta
   (`backend/tests/dados/caixa_lotofacil_3802.json`).
+
+---
+
+## ADR-005 — Perfil dos concursos calculado em Python; agregações em SQL
+
+- **Data:** 2026-10-12
+- **Situação:** Aceita
+- **Complementa:** ADR-003.
+
+### Contexto
+
+O perfil de um concurso (pares, primos, soma, moldura/miolo, linhas, colunas, sequências,
+Fibonacci, múltiplos de 3, repetidas do anterior) será usado também para filtrar os jogos
+gerados na Fase 4. Ter a mesma regra escrita em SQL e em Python abriria espaço para as duas
+divergirem.
+
+### Decisão
+
+- Frequência, janelas, atraso, obrigatórias/excluídas, pares e trios são calculados pelo
+  PostgreSQL (consultas da seção 6 de `BANCO_DE_DADOS.md`).
+- O perfil é calculado por funções Python puras (`app/services/estatisticas/perfil.py`) sobre
+  as dezenas lidas do banco. A distribuição de uma característica lê as dezenas de todos os
+  concursos (ou dos últimos N) e conta em Python.
+
+### Justificativa
+
+Uma só definição de cada característica, testável sem banco. Medição com 3.802 concursos
+sintéticos (PostgreSQL 16, ambiente do assistente): distribuição ~70 ms; perfil de 20
+concursos ~2 ms; frequência ~18 ms; atrasos ~68 ms; pares ~190 ms; trios ~730 ms.
+
+### Consequências
+
+Nenhuma tabela nova. Se o volume crescer a ponto de a distribuição ficar lenta, a alternativa
+é calcular em SQL com testes que comparem os dois resultados.
+

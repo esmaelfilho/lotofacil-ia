@@ -7,7 +7,7 @@ Sistema de análise estatística e geração de jogos da **Lotofácil**.
 
 **Situação:** a base do backend está pronta (configuração, conexão com o PostgreSQL,
 modelos, migrações, endpoint `/saude` e testes) e os concursos já podem ser atualizados pela
-API da Caixa. Estatísticas, geração de jogos e o frontend ainda serão feitos (veja [`docs/BACKLOG.md`](docs/BACKLOG.md)).
+API da Caixa e consultados nas estatísticas. Geração de jogos e o frontend ainda serão feitos (veja [`docs/BACKLOG.md`](docs/BACKLOG.md)).
 
 ## Tecnologias
 
@@ -98,6 +98,24 @@ python -m app.comandos.atualizar_concursos   # primeira carga (milhares de concu
 
 Depois, para buscar os novos, use `POST /concursos/atualizar` em http://localhost:8000/docs
 (ou rode o comando de novo). Pode repetir à vontade: nada é duplicado.
+
+## Estatísticas
+
+Com a API rodando, abra http://localhost:8000/docs, seção **estatísticas**. Todas só consultam
+o banco:
+
+| Endpoint | O que mostra |
+|---|---|
+| `GET /estatisticas/frequencia` | Vezes que cada dezena saiu, no total e nos últimos 10, 50 e 100 concursos |
+| `GET /estatisticas/quentes-frias` | As dezenas que mais e menos saíram numa janela (padrão: 5 dezenas, últimos 50) |
+| `GET /estatisticas/atrasos` | Há quantos concursos cada dezena não sai e o maior atraso que já teve |
+| `GET /estatisticas/perfil` | Perfil de cada concurso: pares/ímpares, primos, soma, moldura/miolo, linhas, colunas, sequências, Fibonacci, múltiplos de 3, repetidas do anterior |
+| `GET /estatisticas/distribuicao` | Em quantos concursos cada valor de uma característica aconteceu (ex.: 7 pares, 8 pares...) |
+| `GET /estatisticas/obrigatorias-excluidas` | Em quantos concursos todas as obrigatórias saíram e nenhuma excluída saiu |
+| `GET /estatisticas/combinacoes` | Pares (`tamanho=2`) ou trios (`tamanho=3`) que mais saíram juntos |
+
+Os endpoints de distribuição, obrigatórias/excluídas e combinações aceitam `ultimos=N` para
+olhar só os últimos N concursos.
 
 ## Testes
 
