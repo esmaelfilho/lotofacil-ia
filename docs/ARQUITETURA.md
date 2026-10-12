@@ -32,7 +32,7 @@ lotofacil-ia/
 │   │   │   ├── base.py          # DeclarativeBase + naming_convention
 │   │   │   ├── session.py       # engine, sessionmaker, dependência get_session
 │   │   │   └── verificacao.py   # verificar_conexao() na inicialização
-│   │   ├── models/              # modelos SQLAlchemy (uma tabela por arquivo)
+│   │   ├── models/              # modelos SQLAlchemy, agrupados por assunto
 │   │   ├── schemas/             # modelos Pydantic de entrada e saída
 │   │   ├── repositories/        # acesso a dados
 │   │   ├── services/

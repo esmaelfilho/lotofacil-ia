@@ -5,8 +5,8 @@ em português.
 
 ## Projeto
 
-Sistema de estatísticas e geração de jogos da Lotofácil. Fase atual: especificação (ainda
-sem código). Leia `docs/REQUISITOS.md`, `docs/ARQUITETURA.md` e `docs/BANCO_DE_DADOS.md`
+Sistema de estatísticas e geração de jogos da Lotofácil. Fase atual: base do backend pronta
+(Fase 1 do backlog). Leia `docs/REQUISITOS.md`, `docs/ARQUITETURA.md` e `docs/BANCO_DE_DADOS.md`
 antes de propor mudanças.
 
 ## Regras obrigatórias
@@ -38,7 +38,7 @@ antes de propor mudanças.
   `docs/CHANGELOG.md`. Decisões arquiteturais novas vão para `docs/DECISOES.md`. Não apague
   requisitos ou decisões; marque-os como substituídos.
 
-## Comandos (quando o código existir)
+## Comandos
 
 ```bash
 cd backend && alembic upgrade head          # aplicar migrações

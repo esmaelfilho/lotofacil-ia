@@ -9,16 +9,17 @@ Itens em ordem de prioridade. Estado: `[ ]` a fazer, `[~]` em andamento, `[x]` f
 - [x] Criar `.env.example` e `.gitignore` com `.env`.
 
 ## Fase 1 — Fundação do backend
-- [ ] Criar `backend/` com `pyproject.toml` (FastAPI, Pydantic, pydantic-settings,
+- [x] Criar `backend/` com `pyproject.toml` (FastAPI, Pydantic, pydantic-settings,
       SQLAlchemy 2.x, Alembic, psycopg[binary] 3, pytest).
-- [ ] `core/config.py`: leitura e validação de `DATABASE_URL` (somente `postgresql+psycopg`).
-- [ ] `db/session.py` e verificação de conexão no `lifespan`, com mensagens úteis e sem
+- [x] `core/config.py`: leitura e validação de `DATABASE_URL` (somente `postgresql+psycopg`).
+- [x] `db/session.py` e verificação de conexão no `lifespan`, com mensagens úteis e sem
       credenciais nos logs.
-- [ ] Configurar Alembic (`env.py` lendo a URL das `Settings`, `naming_convention`).
-- [ ] Migração inicial com a função `lotofacil_dezenas_validas` e as tabelas do esquema de
+- [x] Configurar Alembic (`env.py` lendo a URL das `Settings`, `naming_convention`).
+- [x] Migração inicial com a função `lotofacil_dezenas_validas` e as tabelas do esquema de
       referência.
-- [ ] Fixtures de teste com banco `_test`, trava de segurança e savepoints.
-- [ ] Testes T01, T02, T05 e T09.
+- [x] Fixtures de teste com banco `_test`, trava de segurança e savepoints.
+- [x] Testes T01, T02, T05 e T09 (e T03/T04 no nível do banco).
+- [x] Endpoint `GET /saude`.
 - [ ] `docker-compose.yml` opcional só com o PostgreSQL de desenvolvimento e de teste.
 
 ## Fase 2 — Concursos e importação

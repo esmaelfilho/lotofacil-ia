@@ -5,6 +5,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 ## [Não lançado]
 
 ### Adicionado
+- Base do backend (Fase 1): configuração por `.env` com validação e mensagens de erro úteis,
+  filtro que remove senhas dos logs, engine SQLAlchemy com Psycopg 3, modelos das 8 tabelas,
+  migração Alembic `0001` (função `lotofacil_dezenas_validas` e tabelas), endpoint
+  `GET /saude` e testes pytest (unitários e de integração em PostgreSQL, com trava que exige
+  banco `*_test`).
 - Especificação inicial: `README.md`, `CLAUDE.md`, `docs/REQUISITOS.md`,
   `docs/ARQUITETURA.md`, `docs/BANCO_DE_DADOS.md`, `docs/PLANO_DE_TESTES.md`,
   `docs/BACKLOG.md`, `docs/DECISOES.md`.

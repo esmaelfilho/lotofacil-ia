@@ -60,7 +60,17 @@ npm run test
 
 ## 5. Situação atual
 
-O projeto está na fase de especificação; ainda não há código nem testes automatizados.
+Fase 1 implementada. Execução em 2026-10-12, no ambiente de desenvolvimento do assistente
+(Python 3.13, PostgreSQL 16, Linux), com `pytest`:
+
+- **62 testes aprovados** (27 unitários + 35 de integração), 0 falhas.
+- Cobertos: T01, T02, T05, T09 e a parte de banco de T03, T04 e T07 (`ON CONFLICT`).
+- Travas verificadas: banco sem sufixo `_test` e `TEST_DATABASE_URL` igual a `DATABASE_URL`
+  interrompem a suíte; sem `TEST_DATABASE_URL`, os 35 de integração são ignorados com motivo.
+- Pendente: executar no ambiente do usuário (Windows, Python 3.14, PostgreSQL 18) e os casos
+  T06, T07 completo e T08, que dependem dos serviços de estatística e importação.
+
+Validação anterior, da especificação, num PostgreSQL 16 descartável fora do repositório:
 
 Validação feita durante a revisão da especificação (2026-10-12), executada num PostgreSQL 16
 descartável, fora do repositório:

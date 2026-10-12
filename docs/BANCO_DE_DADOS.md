@@ -1,6 +1,6 @@
 # Banco de dados
 
-O banco oficial é o **PostgreSQL** (versão mínima 15, recomendada 16), em todos os
+O banco oficial é o **PostgreSQL** (versão mínima 15; o projeto usa a 18), em todos os
 ambientes. A decisão está registrada em [`DECISOES.md`](DECISOES.md) (ADR-001).
 
 - ORM: SQLAlchemy 2.x (estilo 2.0, tipos `Mapped[...]`).
@@ -32,7 +32,7 @@ Opção com contêiner (o `docker-compose.yml` ainda não existe; está no backl
 ```bash
 docker run --name lotofacil-pg -e POSTGRES_USER=lotofacil_app \
   -e POSTGRES_PASSWORD=<escolha-uma-senha> -e POSTGRES_DB=lotofacil \
-  -p 5432:5432 -d postgres:16
+  -p 5432:5432 -d postgres:18
 docker exec -it lotofacil-pg createdb -U lotofacil_app lotofacil_test
 ```
 
@@ -91,8 +91,8 @@ relação ficaria num JSON sem chave estrangeira.
   gerações antigas. `semente` permite reproduzir a geração.
 - Dezenas obrigatórias e excluídas não podem se sobrepor, as obrigatórias cabem no jogo e
   as excluídas deixam dezenas suficientes.
-- Um jogo não se repete dentro da mesma geração (`uq_jogos_geracao_dezenas`).
-- Cada jogo é avaliado no máximo uma vez por concurso (`uq_avaliacoes_jogo_concurso`).
+- Um jogo não se repete dentro da mesma geração (`uq_jogos_gerados_geracao_id_dezenas`).
+- Cada jogo é avaliado no máximo uma vez por concurso (`uq_avaliacoes_jogo_id_concurso_id`).
 - `avaliacoes.acertos` é derivado de `jogos_gerados.dezenas` e `concursos.dezenas`, que não
   mudam depois de gravados. Fica armazenado porque é o registro da conferência que o
   usuário pediu; o serviço sempre o calcula, nunca recebe da interface.
@@ -105,8 +105,8 @@ relação ficaria num JSON sem chave estrangeira.
 | `ix_concursos_data_sorteio` | filtro e listagem por período |
 | `ix_concursos_importacao_id` | rastrear o que uma importação inseriu |
 | `ix_estrategia_regras_regra_id` | verificar uso de uma regra antes de desativar/excluir (a PK já cobre a busca por estratégia) |
-| `ix_geracoes_jogos_estrategia_id`, `ix_geracoes_jogos_concurso_base` | chaves estrangeiras; listar gerações por estratégia/concurso e checar `RESTRICT` |
-| `uq_jogos_geracao_sequencia` | lista os jogos de uma geração em ordem (cobre a FK `geracao_id`) |
+| `ix_geracoes_jogos_estrategia_id`, `ix_geracoes_jogos_concurso_base_numero` | chaves estrangeiras; listar gerações por estratégia/concurso e checar `RESTRICT` |
+| `uq_jogos_gerados_geracao_id_sequencia` | lista os jogos de uma geração em ordem (cobre a FK `geracao_id`) |
 | `ix_avaliacoes_concurso_id` | avaliações de um concurso e checagem de `RESTRICT` (a única `jogo_id, concurso_id` cobre a busca por jogo) |
 
 **Não criados, de propósito:** índice GIN em `dezenas` (as estatísticas percorrem o histórico
@@ -115,123 +115,150 @@ Novos índices exigem uma consulta real com `EXPLAIN ANALYZE` que mostre o ganho
 
 ## 4. Esquema de referência
 
-A migração inicial do Alembic deve produzir exatamente este esquema. A função é criada com
-`op.execute()` antes das tabelas, e o `downgrade` remove tabelas e depois a função. Este
-SQL foi executado com sucesso num PostgreSQL 16. Nele, chaves primárias e estrangeiras
-usam os nomes padrão do PostgreSQL; na migração elas seguem a convenção da seção 8.
+O esquema é criado pela migração `backend/migrations/versions/0001_esquema_inicial.py`. O SQL
+abaixo é exatamente o que ela executa, gerado com `alembic upgrade head --sql`. A função é
+criada com `op.execute()` antes das tabelas, porque o autogenerate do Alembic não detecta
+funções; o `downgrade` remove as tabelas e depois a função. Os nomes de restrições e índices
+seguem a convenção da seção 8.
 
 ```sql
--- Função de validação das dezenas (IMMUTABLE para poder ser usada em CHECK).
--- Válido quando: sem NULL, todos entre 1 e 25, sem repetição, em ordem
--- estritamente crescente e com quantidade entre qtd_min e qtd_max.
 CREATE FUNCTION lotofacil_dezenas_validas(d smallint[], qtd_min int, qtd_max int)
 RETURNS boolean
 LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
 AS $$
-    SELECT array_ndims(d) = 1
+    SELECT (cardinality(d) = 0 OR array_ndims(d) = 1)
        AND cardinality(d) BETWEEN qtd_min AND qtd_max
        AND d = ARRAY(SELECT DISTINCT x FROM unnest(d) AS x
                      WHERE x BETWEEN 1 AND 25 ORDER BY x)
 $$;
 
+CREATE TABLE estrategias (
+    id BIGINT GENERATED ALWAYS AS IDENTITY, 
+    nome VARCHAR(120) NOT NULL, 
+    descricao TEXT, 
+    ativa BOOLEAN DEFAULT true NOT NULL, 
+    criada_em TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+    atualizada_em TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+    CONSTRAINT pk_estrategias PRIMARY KEY (id), 
+    CONSTRAINT uq_estrategias_nome UNIQUE (nome)
+);
+
 CREATE TABLE historico_importacoes (
-    id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    origem          varchar(20)  NOT NULL CHECK (origem IN ('ARQUIVO', 'API')),
-    referencia      varchar(255) NOT NULL,
-    hash_conteudo   char(64),
-    status          varchar(20)  NOT NULL DEFAULT 'EM_ANDAMENTO'
-                    CHECK (status IN ('EM_ANDAMENTO', 'CONCLUIDA', 'CONCLUIDA_COM_REJEICOES', 'FALHOU')),
-    total_lidos     integer NOT NULL DEFAULT 0 CHECK (total_lidos >= 0),
-    total_inseridos integer NOT NULL DEFAULT 0 CHECK (total_inseridos >= 0),
-    total_ignorados integer NOT NULL DEFAULT 0 CHECK (total_ignorados >= 0),
-    total_rejeitados integer NOT NULL DEFAULT 0 CHECK (total_rejeitados >= 0),
-    mensagem_erro   text,
-    iniciada_em     timestamptz NOT NULL DEFAULT now(),
-    finalizada_em   timestamptz,
-    CHECK (finalizada_em IS NULL OR finalizada_em >= iniciada_em)
+    id BIGINT GENERATED ALWAYS AS IDENTITY, 
+    origem VARCHAR(20) NOT NULL, 
+    referencia VARCHAR(255) NOT NULL, 
+    hash_conteudo VARCHAR(64), 
+    status VARCHAR(20) DEFAULT 'EM_ANDAMENTO' NOT NULL, 
+    total_lidos INTEGER DEFAULT '0' NOT NULL, 
+    total_inseridos INTEGER DEFAULT '0' NOT NULL, 
+    total_ignorados INTEGER DEFAULT '0' NOT NULL, 
+    total_rejeitados INTEGER DEFAULT '0' NOT NULL, 
+    mensagem_erro TEXT, 
+    iniciada_em TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+    finalizada_em TIMESTAMP WITH TIME ZONE, 
+    CONSTRAINT pk_historico_importacoes PRIMARY KEY (id), 
+    CONSTRAINT ck_historico_importacoes_origem CHECK (origem IN ('ARQUIVO', 'API')), 
+    CONSTRAINT ck_historico_importacoes_status CHECK (status IN ('EM_ANDAMENTO', 'CONCLUIDA', 'CONCLUIDA_COM_REJEICOES', 'FALHOU')), 
+    CONSTRAINT ck_historico_importacoes_periodo CHECK (finalizada_em IS NULL OR finalizada_em >= iniciada_em), 
+    CONSTRAINT ck_historico_importacoes_totais_nao_negativos CHECK (total_lidos >= 0 AND total_inseridos >= 0 AND total_ignorados >= 0 AND total_rejeitados >= 0)
+);
+
+CREATE TABLE regras_estatisticas (
+    id BIGINT GENERATED ALWAYS AS IDENTITY, 
+    codigo VARCHAR(50) NOT NULL, 
+    nome VARCHAR(120) NOT NULL, 
+    descricao TEXT, 
+    parametros_padrao JSONB DEFAULT '{}'::jsonb NOT NULL, 
+    ativa BOOLEAN DEFAULT true NOT NULL, 
+    CONSTRAINT pk_regras_estatisticas PRIMARY KEY (id), 
+    CONSTRAINT ck_regras_estatisticas_parametros_objeto CHECK (jsonb_typeof(parametros_padrao) = 'object'), 
+    CONSTRAINT uq_regras_estatisticas_codigo UNIQUE (codigo)
 );
 
 CREATE TABLE concursos (
-    id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    numero          integer  NOT NULL CHECK (numero > 0),
-    data_sorteio    date     NOT NULL,
-    dezenas         smallint[] NOT NULL
-                    CONSTRAINT ck_concursos_dezenas CHECK (lotofacil_dezenas_validas(dezenas, 15, 15)),
-    importacao_id   bigint REFERENCES historico_importacoes (id) ON DELETE SET NULL,
-    criado_em       timestamptz NOT NULL DEFAULT now(),
+    id BIGINT GENERATED ALWAYS AS IDENTITY, 
+    numero INTEGER NOT NULL, 
+    data_sorteio DATE NOT NULL, 
+    dezenas SMALLINT[] NOT NULL, 
+    importacao_id BIGINT, 
+    criado_em TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+    CONSTRAINT pk_concursos PRIMARY KEY (id), 
+    CONSTRAINT ck_concursos_dezenas CHECK (lotofacil_dezenas_validas(dezenas, 15, 15)), 
+    CONSTRAINT ck_concursos_numero_positivo CHECK (numero > 0), 
+    CONSTRAINT fk_concursos_importacao_id_historico_importacoes FOREIGN KEY(importacao_id) REFERENCES historico_importacoes (id) ON DELETE SET NULL, 
     CONSTRAINT uq_concursos_numero UNIQUE (numero)
 );
+
 CREATE INDEX ix_concursos_data_sorteio ON concursos (data_sorteio);
+
 CREATE INDEX ix_concursos_importacao_id ON concursos (importacao_id);
 
-CREATE TABLE regras_estatisticas (
-    id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    codigo      varchar(50)  NOT NULL CONSTRAINT uq_regras_codigo UNIQUE,
-    nome        varchar(120) NOT NULL,
-    descricao   text,
-    parametros_padrao jsonb NOT NULL DEFAULT '{}'::jsonb
-                CHECK (jsonb_typeof(parametros_padrao) = 'object'),
-    ativa       boolean NOT NULL DEFAULT true
-);
-
-CREATE TABLE estrategias (
-    id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nome          varchar(120) NOT NULL CONSTRAINT uq_estrategias_nome UNIQUE,
-    descricao     text,
-    ativa         boolean NOT NULL DEFAULT true,
-    criada_em     timestamptz NOT NULL DEFAULT now(),
-    atualizada_em timestamptz NOT NULL DEFAULT now()
-);
-
 CREATE TABLE estrategia_regras (
-    estrategia_id bigint NOT NULL REFERENCES estrategias (id) ON DELETE CASCADE,
-    regra_id      bigint NOT NULL REFERENCES regras_estatisticas (id) ON DELETE RESTRICT,
-    parametros    jsonb  NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(parametros) = 'object'),
-    PRIMARY KEY (estrategia_id, regra_id)
+    estrategia_id BIGINT NOT NULL, 
+    regra_id BIGINT NOT NULL, 
+    parametros JSONB DEFAULT '{}'::jsonb NOT NULL, 
+    CONSTRAINT pk_estrategia_regras PRIMARY KEY (estrategia_id, regra_id), 
+    CONSTRAINT ck_estrategia_regras_parametros_objeto CHECK (jsonb_typeof(parametros) = 'object'), 
+    CONSTRAINT fk_estrategia_regras_estrategia_id_estrategias FOREIGN KEY(estrategia_id) REFERENCES estrategias (id) ON DELETE CASCADE, 
+    CONSTRAINT fk_estrategia_regras_regra_id_regras_estatisticas FOREIGN KEY(regra_id) REFERENCES regras_estatisticas (id) ON DELETE RESTRICT
 );
+
 CREATE INDEX ix_estrategia_regras_regra_id ON estrategia_regras (regra_id);
 
 CREATE TABLE geracoes_jogos (
-    id                   bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    estrategia_id        bigint REFERENCES estrategias (id) ON DELETE RESTRICT,
-    concurso_base_numero integer NOT NULL REFERENCES concursos (numero) ON DELETE RESTRICT,
-    quantidade_jogos     integer  NOT NULL CHECK (quantidade_jogos > 0),
-    dezenas_por_jogo     smallint NOT NULL DEFAULT 15 CHECK (dezenas_por_jogo BETWEEN 15 AND 20),
-    dezenas_obrigatorias smallint[] NOT NULL DEFAULT '{}'
-                         CHECK (lotofacil_dezenas_validas(dezenas_obrigatorias, 0, 20)),
-    dezenas_excluidas    smallint[] NOT NULL DEFAULT '{}'
-                         CHECK (lotofacil_dezenas_validas(dezenas_excluidas, 0, 10)),
-    parametros           jsonb NOT NULL CHECK (jsonb_typeof(parametros) = 'object'),
-    semente              bigint,
-    criada_em            timestamptz NOT NULL DEFAULT now(),
-    CONSTRAINT ck_geracoes_obrigatorias_excluidas_disjuntas
-        CHECK (NOT (dezenas_obrigatorias && dezenas_excluidas)),
-    CONSTRAINT ck_geracoes_obrigatorias_cabem
-        CHECK (cardinality(dezenas_obrigatorias) <= dezenas_por_jogo),
-    CONSTRAINT ck_geracoes_excluidas_permitem_jogo
-        CHECK (25 - cardinality(dezenas_excluidas) >= dezenas_por_jogo)
+    id BIGINT GENERATED ALWAYS AS IDENTITY, 
+    estrategia_id BIGINT, 
+    concurso_base_numero INTEGER NOT NULL, 
+    quantidade_jogos INTEGER NOT NULL, 
+    dezenas_por_jogo SMALLINT DEFAULT '15' NOT NULL, 
+    dezenas_obrigatorias SMALLINT[] DEFAULT '{}'::smallint[] NOT NULL, 
+    dezenas_excluidas SMALLINT[] DEFAULT '{}'::smallint[] NOT NULL, 
+    parametros JSONB NOT NULL, 
+    semente BIGINT, 
+    criada_em TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+    CONSTRAINT pk_geracoes_jogos PRIMARY KEY (id), 
+    CONSTRAINT ck_geracoes_jogos_parametros_objeto CHECK (jsonb_typeof(parametros) = 'object'), 
+    CONSTRAINT ck_geracoes_jogos_excluidas_permitem_jogo CHECK (25 - cardinality(dezenas_excluidas) >= dezenas_por_jogo), 
+    CONSTRAINT ck_geracoes_jogos_obrigatorias_excluidas_disjuntas CHECK (NOT (dezenas_obrigatorias && dezenas_excluidas)), 
+    CONSTRAINT ck_geracoes_jogos_obrigatorias_cabem CHECK (cardinality(dezenas_obrigatorias) <= dezenas_por_jogo), 
+    CONSTRAINT ck_geracoes_jogos_dezenas_por_jogo CHECK (dezenas_por_jogo BETWEEN 15 AND 20), 
+    CONSTRAINT ck_geracoes_jogos_excluidas CHECK (lotofacil_dezenas_validas(dezenas_excluidas, 0, 10)), 
+    CONSTRAINT ck_geracoes_jogos_obrigatorias CHECK (lotofacil_dezenas_validas(dezenas_obrigatorias, 0, 20)), 
+    CONSTRAINT ck_geracoes_jogos_quantidade_positiva CHECK (quantidade_jogos > 0), 
+    CONSTRAINT fk_geracoes_jogos_concurso_base_numero_concursos FOREIGN KEY(concurso_base_numero) REFERENCES concursos (numero) ON DELETE RESTRICT, 
+    CONSTRAINT fk_geracoes_jogos_estrategia_id_estrategias FOREIGN KEY(estrategia_id) REFERENCES estrategias (id) ON DELETE RESTRICT
 );
+
+CREATE INDEX ix_geracoes_jogos_concurso_base_numero ON geracoes_jogos (concurso_base_numero);
+
 CREATE INDEX ix_geracoes_jogos_estrategia_id ON geracoes_jogos (estrategia_id);
-CREATE INDEX ix_geracoes_jogos_concurso_base ON geracoes_jogos (concurso_base_numero);
 
 CREATE TABLE jogos_gerados (
-    id         bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    geracao_id bigint  NOT NULL REFERENCES geracoes_jogos (id) ON DELETE CASCADE,
-    sequencia  integer NOT NULL CHECK (sequencia > 0),
-    dezenas    smallint[] NOT NULL
-               CONSTRAINT ck_jogos_dezenas CHECK (lotofacil_dezenas_validas(dezenas, 15, 20)),
-    CONSTRAINT uq_jogos_geracao_sequencia UNIQUE (geracao_id, sequencia),
-    CONSTRAINT uq_jogos_geracao_dezenas UNIQUE (geracao_id, dezenas)
+    id BIGINT GENERATED ALWAYS AS IDENTITY, 
+    geracao_id BIGINT NOT NULL, 
+    sequencia INTEGER NOT NULL, 
+    dezenas SMALLINT[] NOT NULL, 
+    CONSTRAINT pk_jogos_gerados PRIMARY KEY (id), 
+    CONSTRAINT ck_jogos_gerados_dezenas CHECK (lotofacil_dezenas_validas(dezenas, 15, 20)), 
+    CONSTRAINT ck_jogos_gerados_sequencia_positiva CHECK (sequencia > 0), 
+    CONSTRAINT fk_jogos_gerados_geracao_id_geracoes_jogos FOREIGN KEY(geracao_id) REFERENCES geracoes_jogos (id) ON DELETE CASCADE, 
+    CONSTRAINT uq_jogos_gerados_geracao_id_dezenas UNIQUE (geracao_id, dezenas), 
+    CONSTRAINT uq_jogos_gerados_geracao_id_sequencia UNIQUE (geracao_id, sequencia)
 );
 
 CREATE TABLE avaliacoes (
-    id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    jogo_id     bigint   NOT NULL REFERENCES jogos_gerados (id) ON DELETE CASCADE,
-    concurso_id bigint   NOT NULL REFERENCES concursos (id) ON DELETE RESTRICT,
-    acertos     smallint NOT NULL CHECK (acertos BETWEEN 0 AND 15),
-    avaliada_em timestamptz NOT NULL DEFAULT now(),
-    CONSTRAINT uq_avaliacoes_jogo_concurso UNIQUE (jogo_id, concurso_id)
+    id BIGINT GENERATED ALWAYS AS IDENTITY, 
+    jogo_id BIGINT NOT NULL, 
+    concurso_id BIGINT NOT NULL, 
+    acertos SMALLINT NOT NULL, 
+    avaliada_em TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+    CONSTRAINT pk_avaliacoes PRIMARY KEY (id), 
+    CONSTRAINT ck_avaliacoes_acertos CHECK (acertos BETWEEN 0 AND 15), 
+    CONSTRAINT fk_avaliacoes_concurso_id_concursos FOREIGN KEY(concurso_id) REFERENCES concursos (id) ON DELETE RESTRICT, 
+    CONSTRAINT fk_avaliacoes_jogo_id_jogos_gerados FOREIGN KEY(jogo_id) REFERENCES jogos_gerados (id) ON DELETE CASCADE, 
+    CONSTRAINT uq_avaliacoes_jogo_id_concurso_id UNIQUE (jogo_id, concurso_id)
 );
+
 CREATE INDEX ix_avaliacoes_concurso_id ON avaliacoes (concurso_id);
 ```
 
@@ -391,8 +418,8 @@ concluída com novos concursos. A justificativa e a medição serão registradas
   não detecta funções SQL e pode omitir `CHECK`. Use `op.execute()` para essas partes.
 - Nomes de restrições seguem a convenção do `MetaData(naming_convention=...)`:
   `pk_%(table_name)s`, `fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s`,
-  `uq_%(table_name)s_%(column_0_name)s`, `ck_%(table_name)s_%(constraint_name)s`,
-  `ix_%(column_0_label)s`.
+  `uq_%(table_name)s_%(column_0_N_name)s`, `ck_%(table_name)s_%(constraint_name)s`,
+  `ix_%(table_name)s_%(column_0_N_name)s` (definida em `backend/app/db/base.py`).
 - Migrações de dados (por exemplo, carga inicial de `regras_estatisticas`) ficam em
   migrações separadas das estruturais.
 - Nunca editar uma migração já aplicada em outro ambiente; criar uma nova.
