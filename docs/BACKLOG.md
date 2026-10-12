@@ -28,7 +28,7 @@ Itens em ordem de prioridade. Estado: `[ ]` a fazer, `[~]` em andamento, `[x]` f
 - [x] Endpoints `POST /concursos/atualizar`, `GET /concursos`, `GET /concursos/{numero}` e
       `GET /importacoes`.
 - [x] Comando `python -m app.comandos.atualizar_concursos` para a primeira carga.
-- [ ] Botão "Atualizar" na interface (Fase 5).
+- [x] Botão "Atualizar" na interface (Fase 5).
 - [ ] Importação por arquivo (planilha da Caixa ou CSV) como alternativa, se a API mudar.
 
 ## Fase 3 — Estatísticas
@@ -43,9 +43,10 @@ Itens em ordem de prioridade. Estado: `[ ]` a fazer, `[~]` em andamento, `[x]` f
 - [ ] Avaliação de jogos e conferência contra o histórico.
 
 ## Fase 5 — Frontend
-- [ ] Projeto Vite + React + TypeScript + Material UI + Recharts.
-- [ ] Telas de concursos, estatísticas, estratégias, geração e avaliação.
-- [ ] Testes com Vitest.
+- [x] Projeto Vite + React + TypeScript + Material UI + Recharts.
+- [x] Telas de concursos (com botão Atualizar), estatísticas e perfil dos concursos.
+- [ ] Telas de estratégias, geração e avaliação (depois da Fase 4).
+- [x] Testes com Vitest.
 
 ## Ideias futuras (fora do escopo atual)
 - [ ] Guardar a ordem em que as dezenas foram sorteadas (coluna adicional, se a fonte

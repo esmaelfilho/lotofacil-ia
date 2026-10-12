@@ -5,6 +5,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 ## [Não lançado]
 
 ### Adicionado
+- Tela no navegador (`frontend/`, React + TypeScript + Vite + Material UI + Recharts): abas
+  Concursos (botão "Atualizar concursos", último resultado, lista paginada, histórico),
+  Estatísticas (frequência, quentes e frias, atrasos, distribuição, pares e trios, volante de
+  obrigatórias e excluídas) e Perfil dos concursos. Proxy do Vite para a API (ADR-006).
+  Testes Vitest. Backend sem alterações.
 - Estatísticas (Fase 3, RF-03.1 a RF-03.13): endpoints `GET /estatisticas/frequencia`,
   `/quentes-frias`, `/atrasos`, `/perfil`, `/distribuicao`, `/obrigatorias-excluidas` e
   `/combinacoes`. Frequência, atraso e combinações em SQL; perfil dos concursos em Python

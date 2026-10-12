@@ -102,9 +102,20 @@ Não há tabelas de pré-cálculo (ADR-003).
 
 ## 4. Frontend
 
-React + TypeScript com Vite, componentes Material UI e gráficos Recharts. Consome a API
-pela variável `VITE_API_URL`. Não acessa o banco diretamente. O aviso sobre a independência
-dos sorteios aparece nas telas de estatística e de geração.
+React + TypeScript com Vite, componentes Material UI e gráficos Recharts. Não acessa o banco
+diretamente. O aviso sobre a independência dos sorteios aparece no topo de todas as telas.
+
+- **Conversa com a API:** a página chama sempre `/api/...`; em desenvolvimento o servidor do
+  Vite repassa para `VITE_API_URL` (padrão `http://localhost:8000`, lida do `.env` da raiz,
+  só variáveis `VITE_`). O backend não precisa de CORS (ADR-006).
+- **Estrutura:** `src/api/` (cliente `fetch`, tipos das respostas, hook `useDados`),
+  `src/componentes/` (bolinhas das dezenas, volante 5×5, gráfico de barras, seção, estados de
+  carregando/erro), `src/paginas/` (Concursos, Estatísticas, Perfil) e `src/util/`
+  (formatação em português). Abas do Material UI, sem roteador.
+- **Erros:** mensagens da API (`detail`) aparecem na tela; backend desligado mostra a
+  orientação de iniciar o `uvicorn` e um botão "Tentar de novo".
+- **Testes:** Vitest + Testing Library em jsdom, com `fetch` simulado
+  (`src/testes/apiSimulada.ts`).
 
 ## 5. Ambientes
 

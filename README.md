@@ -7,7 +7,7 @@ Sistema de análise estatística e geração de jogos da **Lotofácil**.
 
 **Situação:** a base do backend está pronta (configuração, conexão com o PostgreSQL,
 modelos, migrações, endpoint `/saude` e testes) e os concursos já podem ser atualizados pela
-API da Caixa e consultados nas estatísticas. Geração de jogos e o frontend ainda serão feitos (veja [`docs/BACKLOG.md`](docs/BACKLOG.md)).
+API da Caixa e consultados nas estatísticas, pela API ou pela tela no navegador. A geração de jogos ainda será feita (veja [`docs/BACKLOG.md`](docs/BACKLOG.md)).
 
 ## Tecnologias
 
@@ -74,13 +74,22 @@ Se o PowerShell recusar o `Activate.ps1` por política de execução, rode uma v
 Para conferir: http://localhost:8000/saude deve responder `"status": "ok"` e
 `"banco": "conectado"`.
 
-O frontend (React) ainda não foi criado; quando existir:
+## Executar a tela (frontend)
 
-```bash
+Precisa do **Node.js 24 LTS** (https://nodejs.org). Com o backend rodando em outro
+PowerShell:
+
+```powershell
 cd frontend
-npm install
-npm run dev                          # http://localhost:5173
+npm install                          # baixa as bibliotecas (primeira vez ou quando mudarem)
+npm run dev                          # abre a tela: http://localhost:5173
 ```
+
+A tela chama `/api/...` e o Vite repassa para o backend em `VITE_API_URL` (padrão
+`http://localhost:8000`), lido do `.env` da raiz ([ADR-006](docs/DECISOES.md)). Abas:
+**Concursos** (botão "Atualizar concursos", último resultado, lista e histórico),
+**Estatísticas** (gráficos, quentes e frias, pares e trios, volante de obrigatórias e
+excluídas) e **Perfil dos concursos**.
 
 A aplicação não cria tabelas sozinha: sempre rode `alembic upgrade head` depois de
 atualizar o código. Se não conseguir conectar ao banco, ela encerra com uma mensagem
@@ -123,6 +132,10 @@ olhar só os últimos N concursos.
 cd backend
 pytest                               # unitários + integração (usa TEST_DATABASE_URL, banco *_test)
 pytest -m "not integration"          # só os que não usam banco
+
+cd ..\frontend
+npm run test                         # Vitest (API simulada, não precisa do backend)
+npm run build                        # confere os tipos do TypeScript e gera a versão final
 ```
 
 Os testes se recusam a rodar contra um banco cujo nome não termine em `_test`.

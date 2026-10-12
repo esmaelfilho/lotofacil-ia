@@ -87,6 +87,16 @@ Fase 1 implementada. Execução em 2026-10-12, no ambiente de desenvolvimento do
   concursos aleatórios com semente fixa, comparando frequência, atrasos, pares, trios,
   distribuição e obrigatórias/excluídas com um cálculo direto em Python. Também: banco vazio,
   filtros inválidos (422) e todos os endpoints.
+- Fase 3 no ambiente do usuário (Windows, Python 3.14.8, PostgreSQL 18.6), 2026-10-12:
+  **111 passed**.
+- Tela (frontend), 2026-10-12, no ambiente do assistente (Node 22.22): `npm run test` com
+  **21 testes aprovados** (formatação; cliente da API, incluindo erro 422, erro 502 e backend
+  desligado; volante; página de concursos com botão Atualizar, "ainda faltam", Caixa fora do
+  ar, banco vazio; página de estatísticas com volante e troca para trios; troca de abas e
+  aviso sempre visível). `npm run build` sem erros de tipo. A tela também foi aberta num
+  navegador (Chromium) contra o backend real com 3.801 concursos sintéticos e uma Caixa
+  simulada: o botão Atualizar inseriu o concurso 3802, todas as abas carregaram e o console
+  do navegador não registrou erros.
 
 Validação anterior, da especificação, num PostgreSQL 16 descartável fora do repositório:
 

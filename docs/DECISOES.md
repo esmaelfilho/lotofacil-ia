@@ -208,3 +208,32 @@ concursos ~2 ms; frequência ~18 ms; atrasos ~68 ms; pares ~190 ms; trios ~730 m
 Nenhuma tabela nova. Se o volume crescer a ponto de a distribuição ficar lenta, a alternativa
 é calcular em SQL com testes que comparem os dois resultados.
 
+---
+
+## ADR-006 — A tela fala com a API pelo proxy do Vite
+
+- **Data:** 2026-10-12
+- **Situação:** Aceita
+
+### Contexto
+
+Em desenvolvimento a tela roda em `http://localhost:5173` (Vite) e a API em
+`http://localhost:8000` (uvicorn). Por segurança, o navegador bloqueia chamadas entre
+endereços diferentes, a menos que o servidor libere (CORS).
+
+### Decisão
+
+A tela chama sempre `/api/...` no próprio endereço. O servidor do Vite repassa essas chamadas
+para `VITE_API_URL` (padrão `http://localhost:8000`), removendo o prefixo `/api`. O
+`vite.config.ts` lê o `.env` da raiz, carregando apenas variáveis que começam com `VITE_`.
+
+### Justificativa
+
+O backend não precisa de nenhuma alteração nem de configuração de CORS; o navegador vê um
+endereço só. Uso local por um único usuário, sem login (fora do escopo).
+
+### Consequências
+
+Para publicar a tela fora do ambiente de desenvolvimento, será preciso servir os arquivos de
+`frontend/dist` atrás do mesmo endereço da API (ou liberar CORS), o que fica para uma nova ADR.
+
