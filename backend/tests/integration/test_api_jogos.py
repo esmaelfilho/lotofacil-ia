@@ -92,3 +92,26 @@ def test_erros(cliente):
     assert cliente.delete(f"/estrategias/{nova['id']}").status_code == 204
     assert cliente.post("/estrategias", json={"nome": "temporária"}).status_code == 201
     assert cliente.post("/estrategias", json={"nome": "TEMPORÁRIA"}).status_code == 409
+
+
+def test_gerar_sem_gravar_e_testar_estrategia(cliente):
+    antes = cliente.get("/geracoes").json()["total"]
+    previa = cliente.post("/geracoes", json={"quantidade": 2, "gravar": False})
+    assert previa.status_code == 201
+    assert previa.json()["gravada"] is False and previa.json()["id"] is None
+    assert cliente.get("/geracoes").json()["total"] == antes
+
+    teste = cliente.post("/testes-estrategia", json={"concurso": 5, "quantidade": 3, "semente": 4})
+    assert teste.status_code == 200
+    corpo = teste.json()
+    assert corpo["concurso_base"] == 3 and len(corpo["resultados"]) == 1
+    assert set(corpo["resultados"][0]["por_acertos"]) == {"11", "12", "13", "14", "15"}
+
+    assert cliente.post("/testes-estrategia", json={"concurso": 4}).status_code == 404
+    assert cliente.post("/testes-estrategia", json={"concurso": 1}).status_code == 422
+    assert (
+        cliente.post(
+            "/testes-estrategia", json={"concurso": 2, "estrategia_ids": [1, 1]}
+        ).status_code
+        == 422
+    )

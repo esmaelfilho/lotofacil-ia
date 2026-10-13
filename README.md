@@ -89,7 +89,9 @@ A tela chama `/api/...` e o Vite repassa para o backend em `VITE_API_URL` (padr�
 `http://localhost:8000`), lido do `.env` da raiz ([ADR-006](docs/DECISOES.md)). Abas:
 **Concursos** (botão "Atualizar concursos", último resultado, lista e histórico),
 **Estatísticas** (gráficos, quentes e frias, pares e trios, volante de obrigatórias e
-excluídas), **Perfil dos concursos** e **Jogos** (estratégias, geração e conferência).
+excluídas), **Perfil dos concursos**, **Jogos** (estratégias, geração, gravação e
+conferência) e **Testar estratégia** (como os jogos de cada estratégia teriam se saído num
+concurso que já saiu).
 
 A aplicação não cria tabelas sozinha: sempre rode `alembic upgrade head` depois de
 atualizar o código. Se não conseguir conectar ao banco, ela encerra com uma mensagem
@@ -138,10 +140,23 @@ Na aba **Jogos** (ou pela API, seção **jogos** e **estratégias** do `/docs`):
 | `GET /regras` | Catálogo de regras (pares, primos, soma, moldura, miolo, maior sequência, Fibonacci, múltiplos de 3, repetidas do concurso base), cada uma com faixa padrão |
 | `GET/POST /estrategias`, `GET/PUT /estrategias/{id}` | Estratégias: conjuntos de regras com mínimo e máximo |
 | `POST /estrategias/{id}/desativar` e `/ativar`, `DELETE /estrategias/{id}` | Uma estratégia já usada só pode ser desativada |
-| `POST /geracoes` | Gera de 1 a 100 jogos de 15 a 20 dezenas, com estratégia, obrigatórias e excluídas; a mesma `semente` reproduz os mesmos jogos |
+| `POST /geracoes` | Gera de 1 a 100 jogos de 15 a 20 dezenas, com estratégia, obrigatórias e excluídas; a mesma `semente` reproduz os mesmos jogos. Com `"gravar": false`, só mostra os jogos, sem gravar |
 | `GET /geracoes`, `GET /geracoes/{id}` | Gerações feitas e seus jogos |
 | `POST /geracoes/{id}/conferir?concurso=N` | Confere os jogos contra um concurso e registra os acertos |
 | `POST /jogos/conferir-historico` | Quantas vezes um jogo teria feito 11 a 15 pontos em todo o histórico |
+| `POST /testes-estrategia` | Testa estratégias num concurso que já saiu (veja abaixo) |
+
+Na tela, "Gerar jogos" mostra os jogos sem gravar. Clique em **Gravar jogos** para guardá-los
+(são gravados exatamente os jogos mostrados) e conferi-los depois em "Jogos gravados".
+
+### Testar estratégia
+
+Na aba **Testar estratégia**, escolha um concurso que já saiu e uma ou mais estratégias (e,
+para comparar, jogos sem estratégia). Os jogos são gerados como se fosse a véspera, com base
+no concurso anterior, e conferidos com o resultado: as dezenas acertadas aparecem em verde e
+um resumo mostra o maior acerto, a média e quantos jogos fizeram 11 a 15 pontos. Nada é
+gravado, a não ser que você clique em **Gravar estes jogos**; aí eles vão para "Jogos
+gravados" já conferidos com o concurso testado.
 
 O catálogo de regras é criado pela migração `0003`: rode `alembic upgrade head` depois de
 atualizar o código.

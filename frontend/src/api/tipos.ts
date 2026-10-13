@@ -211,6 +211,7 @@ export interface GeracaoEntrada {
   excluidas: number[]
   concurso_base?: number | null
   semente?: number | null
+  gravar?: boolean
 }
 
 export interface JogoGerado {
@@ -236,8 +237,17 @@ export interface GeracaoResumo {
 }
 
 export interface Geracao extends GeracaoResumo {
+  gravada: boolean
   tentativas: number | null
   jogos: JogoGerado[]
+}
+
+/** Jogos gerados e ainda não gravados (`gravar: false`): sem id e sem data. */
+export interface GeracaoPrevia extends Omit<Geracao, 'id' | 'criada_em' | 'jogos'> {
+  id: null
+  criada_em: null
+  gravada: false
+  jogos: (Omit<JogoGerado, 'id'> & { id: null })[]
 }
 
 export interface PaginaGeracoes {
@@ -267,4 +277,45 @@ export interface ConferenciaHistorico {
   por_acertos: Record<string, number>
   maior_acerto: number | null
   ultimo_concurso_com_11_ou_mais: number | null
+}
+
+export interface TesteEstrategiaEntrada {
+  concurso: number
+  estrategia_ids: number[]
+  incluir_aleatorio: boolean
+  quantidade: number
+  dezenas_por_jogo: number
+  obrigatorias: number[]
+  excluidas: number[]
+  semente?: number | null
+}
+
+export interface JogoTestado {
+  sequencia: number
+  dezenas: number[]
+  acertos: number
+  dezenas_acertadas: number[]
+}
+
+export interface ResultadoDoTeste {
+  estrategia_id: number | null
+  estrategia_nome: string | null
+  regras: FaixaComNome[]
+  jogos: JogoTestado[]
+  maior_acerto: number | null
+  media_acertos: number | null
+  por_acertos: Record<string, number>
+  aviso: string | null
+}
+
+export interface TesteEstrategia {
+  concurso: number
+  dezenas_sorteadas: number[]
+  concurso_base: number
+  quantidade: number
+  dezenas_por_jogo: number
+  obrigatorias: number[]
+  excluidas: number[]
+  semente: number
+  resultados: ResultadoDoTeste[]
 }

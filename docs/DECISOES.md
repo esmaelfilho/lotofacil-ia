@@ -278,3 +278,43 @@ pior caso, medido no ambiente do assistente).
   `parametros` para registro.
 - Estratégias muito restritivas podem não gerar; a mensagem orienta afrouxar alguma faixa.
 
+## ADR-008 — Teste de estratégia com base no concurso anterior e gravação opcional
+
+- **Data:** 2026-10-13
+- **Situação:** Aceita
+
+### Contexto
+
+O usuário quer testar uma estratégia num concurso que já saiu, para ver quantas dezenas os
+jogos teriam acertado (RF-07), e escolher quais jogos gravar (RF-05.4). Até aqui, toda
+geração era gravada.
+
+### Decisão
+
+- O teste gera os jogos de cada estratégia com **base no concurso anterior** ao testado
+  (o maior número menor que ele, o que cobre lacunas na numeração). O resultado testado
+  nunca entra na geração; assim a regra "repetidas do concurso base" usa o que se conhecia
+  na véspera.
+- O teste usa o mesmo `sortear_jogos` da geração e a mesma semente para todas as estratégias.
+  Estratégias desativadas não podem ser testadas, como na geração.
+- O teste só consulta: não grava geração nem avaliação. Uma estratégia que não encontra
+  jogos suficientes aparece com aviso, sem interromper as outras.
+- `POST /geracoes` ganhou `gravar` (padrão `true`, compatível com quem já usa a API). Com
+  `false`, devolve os jogos sem `id`. Para gravar depois, a tela reenvia os mesmos
+  parâmetros com a semente e o concurso base devolvidos; pela ADR-007, isso reproduz
+  exatamente os mesmos jogos. Gravar a partir do teste também já confere os jogos com o
+  concurso testado (grava `avaliacoes`).
+- Nenhuma tabela nova: o teste é calculado na hora (ADR-003).
+
+### Justificativa
+
+Usar o concurso anterior como base evita que o teste "olhe o futuro". Reaproveitar a semente
+para gravar evita guardar prévias no banco ou mandar os jogos de volta do navegador, e o
+backend continua sendo quem gera e valida os jogos.
+
+### Consequências
+
+- Gravar depende de a geração ser reproduzível (ADR-007); os testes conferem que os jogos
+  gravados são os mesmos mostrados.
+- Um teste mostra um concurso por vez. Testar muitos concursos de uma vez (acúmulo ao longo
+  do tempo) fica para outro passo, se for pedido.

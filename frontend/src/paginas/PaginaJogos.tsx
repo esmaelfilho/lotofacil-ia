@@ -3,12 +3,13 @@ import Stack from '@mui/material/Stack'
 import { useState } from 'react'
 
 import { api } from '../api/cliente'
-import type { Geracao } from '../api/tipos'
+import type { Geracao, GeracaoPrevia } from '../api/tipos'
 import { useDados } from '../api/useDados'
 import Estado from '../componentes/Estado'
 import Estrategias from './jogos/Estrategias'
 import Geracoes from './jogos/Geracoes'
 import GerarJogos from './jogos/GerarJogos'
+import PreviaJogos from './jogos/PreviaJogos'
 
 export const AVISO_GERACAO =
   'Gerar jogos com filtros estatísticos não aumenta a chance de acerto: todas as combinações têm a mesma chance em cada sorteio.'
@@ -20,6 +21,7 @@ export default function PaginaJogos() {
   const geracoes = useDados(() => api.geracoes(50), [versao])
   const [selecionada, setSelecionada] = useState<number | null>(null)
   const [recemGerada, setRecemGerada] = useState<Geracao | null>(null)
+  const [previa, setPrevia] = useState<GeracaoPrevia | null>(null)
 
   return (
     <Stack spacing={3}>
@@ -29,15 +31,20 @@ export default function PaginaJogos() {
       <Estado consulta={regras}>
         {(catalogo) => <Estrategias estrategias={estrategias} regras={catalogo} />}
       </Estado>
-      <GerarJogos
-        estrategias={estrategias.dados ?? []}
-        aoGerar={(g) => {
-          setRecemGerada(g)
-          setSelecionada(g.id)
-          setVersao((v) => v + 1)
-          estrategias.recarregar() // a estratégia passa a constar como usada
-        }}
-      />
+      <GerarJogos estrategias={estrategias.dados ?? []} aoGerar={setPrevia} />
+      {previa && (
+        <PreviaJogos
+          previa={previa}
+          aoDescartar={() => setPrevia(null)}
+          aoGravar={(g) => {
+            setPrevia(null)
+            setRecemGerada(g)
+            setSelecionada(g.id)
+            setVersao((v) => v + 1)
+            estrategias.recarregar() // a estratégia passa a constar como usada
+          }}
+        />
+      )}
       <Geracoes
         geracoes={geracoes}
         selecionada={selecionada}

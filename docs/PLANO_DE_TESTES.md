@@ -110,6 +110,18 @@ Fase 1 implementada. Execução em 2026-10-12, no ambiente de desenvolvimento do
   conferidos à mão; todos os endpoints; e a aba Jogos com API simulada. A aba também foi usada
   num navegador contra o backend real (3.802 concursos sintéticos): criar estratégia, gerar
   5 jogos, conferir contra o concurso 3801 e ver o histórico de um jogo, sem erros no console.
+- Fase 6 (testar estratégia e gravação opcional), 2026-10-13, no ambiente do assistente:
+  backend **143 testes aprovados** (9 novos) e frontend **33 testes aprovados** (6 novos).
+  Cobrem: a base do teste é o concurso anterior, inclusive com lacuna na numeração (o
+  anterior ao 5 é o 3), e a regra "repetidas" usa essa base; acertos, maior acerto, média e
+  11 a 15 pontos conferidos com um cálculo direto em Python; o teste não grava nada; mesma
+  semente repete o teste; gravar depois (pela prévia ou pelo teste) grava exatamente os
+  mesmos jogos; faixa impossível vira aviso sem derrubar as outras estratégias; erros
+  (concurso inexistente 404, sem concurso anterior 422, estratégia inexistente 404,
+  desativada 422, estratégia repetida 422, obrigatória e excluída ao mesmo tempo 422); e as
+  telas com API simulada. No navegador, contra o backend real: gerar sem gravar, gravar,
+  testar três opções no concurso 3800 (base 3799) e gravar os jogos de uma estratégia; os
+  jogos gravados conferiram com os do teste, e o console não registrou erros.
 
 Validação anterior, da especificação, num PostgreSQL 16 descartável fora do repositório:
 

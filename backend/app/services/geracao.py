@@ -61,22 +61,20 @@ def sortear_jogos(
     return jogos, tentativas
 
 
-def _validar_dezenas(entrada: GeracaoEntrada) -> None:
-    em_comum = sorted(set(entrada.obrigatorias) & set(entrada.excluidas))
+def validar_dezenas(dezenas_por_jogo: int, obrigatorias: list[int], excluidas: list[int]) -> None:
+    em_comum = sorted(set(obrigatorias) & set(excluidas))
     if em_comum:
         raise ErroDeNegocio(
             "uma dezena não pode ser obrigatória e excluída ao mesmo tempo: "
             + ", ".join(f"{d:02d}" for d in em_comum)
         )
-    if len(entrada.obrigatorias) > entrada.dezenas_por_jogo:
+    if len(obrigatorias) > dezenas_por_jogo:
         raise ErroDeNegocio(
-            f"são {len(entrada.obrigatorias)} obrigatórias para jogos de "
-            f"{entrada.dezenas_por_jogo} dezenas"
+            f"são {len(obrigatorias)} obrigatórias para jogos de {dezenas_por_jogo} dezenas"
         )
-    if 25 - len(entrada.excluidas) < entrada.dezenas_por_jogo:
+    if 25 - len(excluidas) < dezenas_por_jogo:
         raise ErroDeNegocio(
-            f"com {len(entrada.excluidas)} excluídas sobram menos de "
-            f"{entrada.dezenas_por_jogo} dezenas"
+            f"com {len(excluidas)} excluídas sobram menos de {dezenas_por_jogo} dezenas"
         )
 
 
@@ -119,25 +117,30 @@ def _resumo(geracao: GeracaoJogos) -> dict[str, Any]:
     }
 
 
+def estrategia_e_regras(
+    sessao: Session, estrategia_id: int | None
+) -> tuple[Estrategia | None, list[FaixaSaida]]:
+    """A estratégia (ativa) e as faixas dela; (None, []) quando não há estratégia."""
+    if estrategia_id is None:
+        return None, []
+    estrategia = sessao.get(Estrategia, estrategia_id)
+    if estrategia is None:
+        raise NaoEncontrado(f"Estratégia {estrategia_id} não existe.")
+    if not estrategia.ativa:
+        raise ErroDeNegocio(f"A estratégia “{estrategia.nome}” está desativada.")
+    return estrategia, faixas_da_estrategia(sessao, estrategia.id)
+
+
+def semente_ou_sorteada(semente: int | None) -> int:
+    return semente if semente is not None else random.SystemRandom().randrange(MAIOR_SEMENTE)
+
+
 def gerar(sessao: Session, entrada: GeracaoEntrada) -> GeracaoSaida:
-    _validar_dezenas(entrada)
+    """Gera os jogos. Com `entrada.gravar` falso, só devolve os jogos, sem gravar nada."""
+    validar_dezenas(entrada.dezenas_por_jogo, entrada.obrigatorias, entrada.excluidas)
     base = _concurso_base(sessao, entrada.concurso_base)
-
-    estrategia = None
-    regras: list[FaixaSaida] = []
-    if entrada.estrategia_id is not None:
-        estrategia = sessao.get(Estrategia, entrada.estrategia_id)
-        if estrategia is None:
-            raise NaoEncontrado(f"Estratégia {entrada.estrategia_id} não existe.")
-        if not estrategia.ativa:
-            raise ErroDeNegocio(f"A estratégia “{estrategia.nome}” está desativada.")
-        regras = faixas_da_estrategia(sessao, estrategia.id)
-
-    semente = (
-        entrada.semente
-        if entrada.semente is not None
-        else random.SystemRandom().randrange(MAIOR_SEMENTE)
-    )
+    estrategia, regras = estrategia_e_regras(sessao, entrada.estrategia_id)
+    semente = semente_ou_sorteada(entrada.semente)
     faixas = [Faixa(r.codigo, r.minimo, r.maximo) for r in regras]
     jogos, tentativas = sortear_jogos(
         entrada.quantidade,
@@ -170,17 +173,18 @@ def gerar(sessao: Session, entrada: GeracaoEntrada) -> GeracaoSaida:
         },
         semente=semente,
     )
-    sessao.add(geracao)
-    sessao.flush()
-    registros = [
-        JogoGerado(geracao_id=geracao.id, sequencia=i, dezenas=jogo)
-        for i, jogo in enumerate(jogos, start=1)
-    ]
-    sessao.add_all(registros)
-    sessao.commit()
-    sessao.refresh(geracao)
+    registros = [JogoGerado(sequencia=i, dezenas=jogo) for i, jogo in enumerate(jogos, start=1)]
+    if entrada.gravar:
+        sessao.add(geracao)
+        sessao.flush()
+        for registro in registros:
+            registro.geracao_id = geracao.id
+        sessao.add_all(registros)
+        sessao.commit()
+        sessao.refresh(geracao)
     return GeracaoSaida(
         **_resumo(geracao),
+        gravada=entrada.gravar,
         tentativas=tentativas,
         jogos=[_jogo_saida(j, list(base.dezenas)) for j in registros],
     )

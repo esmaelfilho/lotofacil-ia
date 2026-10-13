@@ -5,6 +5,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 ## [Não lançado]
 
 ### Adicionado
+- Testar estratégia (RF-07, ADR-008): nova aba em que se escolhe um concurso que já saiu e uma
+  ou mais estratégias (e jogos aleatórios, para comparar); os jogos são gerados com base no
+  concurso anterior e conferidos com o resultado, com resumo de maior acerto, média e 11 a 15
+  pontos. Endpoint `POST /testes-estrategia`. Os jogos de uma estratégia podem ser gravados e
+  já ficam conferidos. Nenhuma tabela nova e nenhuma migração.
 - Estratégias, geração e conferência de jogos (Fase 4, RF-04 a RF-06): catálogo de 9 regras de
   faixa (migração de dados `0003`), CRUD de estratégias, geração reproduzível por semente com
   cópia dos parâmetros (ADR-007), conferência contra um concurso (grava `avaliacoes`) e contra
@@ -42,6 +47,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   gerados, avaliações e histórico de importações, validado num PostgreSQL 16.
 
 ### Alterado
+- Gerar jogos na tela não grava mais automaticamente: os jogos aparecem como "não gravados"
+  e o botão "Gravar jogos" grava exatamente esses jogos (RF-05.4). A lista "Jogos gerados"
+  passou a se chamar "Jogos gravados". Na API, `POST /geracoes` ganhou o campo `gravar`
+  (padrão `true`, como antes); com `false`, a resposta vem com `gravada: false` e sem `id`.
 - O banco previsto deixou de ser SQLite e passou a ser PostgreSQL em todos os ambientes.
 
 ### Removido

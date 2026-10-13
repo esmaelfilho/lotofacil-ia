@@ -46,6 +46,7 @@ lotofacil-ia/
 │   │   │   ├── estrategias.py
 │   │   │   ├── geracao.py       # sorteio com filtro, semente, cópia dos parâmetros
 │   │   │   ├── avaliacao.py     # conferência contra um concurso e contra o histórico
+│   │   │   ├── teste_estrategia.py  # testa estratégias num concurso passado (base = anterior)
 │   │   │   └── erros.py         # ErroDeNegocio (422), NaoEncontrado (404), Conflito (409)
 │   │   └── api/routers/         # concursos, estatisticas, estrategias, geracoes...
 │   ├── tests/
@@ -96,7 +97,14 @@ lotofacil-ia/
 - **Geração** (`services/geracao.py`): sorteia combinações com `random.Random(semente)` e mantém
   só as que respeitam obrigatórias, excluídas e todas as faixas, sem repetir jogo (ADR-007).
   Até 100 jogos por geração e 100.000 tentativas; se não houver jogos suficientes, nada é
-  gravado e a resposta explica. A geração grava uma cópia das regras usadas.
+  gravado e a resposta explica. A geração grava uma cópia das regras usadas. Com
+  `gravar: false`, a geração só devolve os jogos, sem gravar; enviar de novo os mesmos
+  parâmetros com a semente e o concurso base devolvidos grava exatamente os mesmos jogos
+  (ADR-008).
+- **Teste de estratégia** (`services/teste_estrategia.py`): para um concurso que já saiu,
+  gera os jogos de cada estratégia com base no concurso anterior (nunca no testado), usando
+  o mesmo `sortear_jogos` e a mesma semente, e confere contra o resultado. Só consulta; nada
+  é gravado (ADR-008).
 - **Conferência** (`services/avaliacao.py`): contra um concurso grava `avaliacoes`; contra o
   histórico só consulta.
 - Os serviços lançam `ErroDeNegocio`, `NaoEncontrado` e `Conflito`; os routers os traduzem em
@@ -127,8 +135,8 @@ diretamente. O aviso sobre a independência dos sorteios aparece no topo de toda
   só variáveis `VITE_`). O backend não precisa de CORS (ADR-006).
 - **Estrutura:** `src/api/` (cliente `fetch`, tipos das respostas, hook `useDados`),
   `src/componentes/` (bolinhas das dezenas, volante 5×5, gráfico de barras, seção, estados de
-  carregando/erro), `src/paginas/` (Concursos, Estatísticas, Perfil e Jogos, com os componentes da aba Jogos em
-  `src/paginas/jogos/`) e `src/util/`
+  carregando/erro), `src/paginas/` (Concursos, Estatísticas, Perfil, Jogos e Testar estratégia, com os
+  componentes da aba Jogos em `src/paginas/jogos/`) e `src/util/`
   (formatação em português). Abas do Material UI, sem roteador.
 - **Erros:** mensagens da API (`detail`) aparecem na tela; backend desligado mostra a
   orientação de iniciar o `uvicorn` e um botão "Tentar de novo".

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { simularApi } from '../testes/apiSimulada'
-import { ESTRATEGIA, GERACAO, REGRAS } from '../testes/dados'
+import { ESTRATEGIA, GERACAO, PREVIA, REGRAS } from '../testes/dados'
 import PaginaJogos, { AVISO_GERACAO } from './PaginaJogos'
 
 function corpoDaChamada(fetch: ReturnType<typeof simularApi>, metodo: string, caminho: string) {
@@ -13,6 +13,12 @@ function corpoDaChamada(fetch: ReturnType<typeof simularApi>, metodo: string, ca
   return chamada ? JSON.parse(String(chamada[1]?.body)) : undefined
 }
 
+function corposDasChamadas(fetch: ReturnType<typeof simularApi>, metodo: string, caminho: string) {
+  return fetch.mock.calls
+    .filter(([url, opcoes]) => String(url).startsWith(`/api${caminho}`) && opcoes?.method === metodo)
+    .map(([, opcoes]) => JSON.parse(String(opcoes?.body)))
+}
+
 function rotas(extra: Record<string, unknown> = {}) {
   const resumo = { ...GERACAO, jogos: undefined, tentativas: undefined }
   return {
@@ -20,7 +26,8 @@ function rotas(extra: Record<string, unknown> = {}) {
     '/estrategias': [ESTRATEGIA, { ...ESTRATEGIA, id: 2, nome: 'Nova', usada: false, regras: [] }],
     '/geracoes': { total: 1, itens: [resumo] },
     '/geracoes/7': GERACAO,
-    'POST /geracoes': GERACAO,
+    'POST /geracoes': (_url: URL, _metodo: string, corpo: { gravar?: boolean }) =>
+      corpo.gravar ? GERACAO : PREVIA,
     ...extra,
   }
 }
@@ -58,7 +65,7 @@ describe('Página de jogos', () => {
     )
   })
 
-  it('gera jogos, mostra a geração e confere contra um concurso', async () => {
+  it('gera jogos sem gravar, grava os mesmos jogos e confere contra um concurso', async () => {
     const fetch = simularApi(
       rotas({
         'POST /geracoes/7/conferir': {
@@ -78,7 +85,8 @@ describe('Página de jogos', () => {
 
     await usuario.click(await screen.findByRole('button', { name: /dezena 10/ }))
     await usuario.click(screen.getByRole('button', { name: 'Gerar jogos' }))
-    expect(await screen.findByText(/Geração 7/)).toBeInTheDocument()
+    expect(await screen.findByText('Jogos gerados (não gravados)')).toBeInTheDocument()
+    expect(screen.getByText(/ainda não foram gravados/)).toBeInTheDocument()
     expect(corpoDaChamada(fetch, 'POST', '/geracoes')).toEqual({
       estrategia_id: null,
       quantidade: 5,
@@ -87,12 +95,38 @@ describe('Página de jogos', () => {
       excluidas: [],
       concurso_base: null,
       semente: null,
+      gravar: false,
+    })
+
+    // gravar repete a prévia: mesma semente, mesma base e mesmos parâmetros
+    await usuario.click(screen.getByRole('button', { name: 'Gravar jogos' }))
+    expect(await screen.findByText(/Geração 7/)).toBeInTheDocument()
+    expect(screen.queryByText('Jogos gerados (não gravados)')).not.toBeInTheDocument()
+    expect(corposDasChamadas(fetch, 'POST', '/geracoes')[1]).toEqual({
+      estrategia_id: 1,
+      quantidade: 2,
+      dezenas_por_jogo: 15,
+      obrigatorias: [10],
+      excluidas: [],
+      concurso_base: 3802,
+      semente: 42,
+      gravar: true,
     })
 
     await usuario.type(screen.getByLabelText('Conferir contra o concurso'), '3802')
     await usuario.click(screen.getByRole('button', { name: 'Conferir' }))
     expect(await screen.findByText(/1 jogo\(s\) com 15 acertos/)).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Acertos' })).toBeInTheDocument()
+  })
+
+  it('descartar a prévia não grava nada', async () => {
+    const fetch = simularApi(rotas())
+    const usuario = userEvent.setup()
+    render(<PaginaJogos />)
+    await usuario.click(await screen.findByRole('button', { name: 'Gerar jogos' }))
+    await usuario.click(await screen.findByRole('button', { name: 'Descartar' }))
+    expect(screen.queryByText('Jogos gerados (não gravados)')).not.toBeInTheDocument()
+    expect(corposDasChamadas(fetch, 'POST', '/geracoes').map((c) => c.gravar)).toEqual([false])
   })
 
   it('mostra o erro quando as regras não permitem jogos suficientes', async () => {

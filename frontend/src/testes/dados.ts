@@ -111,9 +111,58 @@ export const GERACAO = {
   excluidas: [],
   regras: [{ codigo: 'pares', nome: 'Pares', minimo: 7, maximo: 8 }],
   semente: 42,
+  gravada: true,
   tentativas: 9,
   jogos: [
     { id: 70, sequencia: 1, dezenas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], perfil: PERFIL, repetidas_do_concurso_base: 9 },
     { id: 71, sequencia: 2, dezenas: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24], perfil: PERFIL, repetidas_do_concurso_base: 8 },
+  ],
+}
+
+/** Os mesmos jogos de GERACAO, ainda não gravados (`gravar: false`). */
+export const PREVIA = {
+  ...GERACAO,
+  id: null,
+  criada_em: null,
+  gravada: false,
+  jogos: GERACAO.jogos.map((j) => ({ ...j, id: null })),
+}
+
+export const TESTE = {
+  concurso: 3802,
+  dezenas_sorteadas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  concurso_base: 3801,
+  quantidade: 2,
+  dezenas_por_jogo: 15,
+  obrigatorias: [],
+  excluidas: [],
+  semente: 42,
+  resultados: [
+    {
+      estrategia_id: 1,
+      estrategia_nome: 'Equilibrada',
+      regras: [{ codigo: 'pares', nome: 'Pares', minimo: 7, maximo: 8 }],
+      jogos: [
+        { sequencia: 1, dezenas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17], acertos: 13, dezenas_acertadas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] },
+        { sequencia: 2, dezenas: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24], acertos: 6, dezenas_acertadas: [10, 11, 12, 13, 14, 15] },
+      ],
+      maior_acerto: 13,
+      media_acertos: 9.5,
+      por_acertos: { '11': 0, '12': 0, '13': 1, '14': 0, '15': 0 },
+      aviso: null,
+    },
+    {
+      estrategia_id: null,
+      estrategia_nome: null,
+      regras: [],
+      jogos: [
+        { sequencia: 1, dezenas: [3, 5, 7, 9, 11, 12, 14, 16, 18, 19, 20, 21, 22, 23, 25], acertos: 7, dezenas_acertadas: [3, 5, 7, 9, 11, 12, 14] },
+        { sequencia: 2, dezenas: [1, 2, 4, 6, 8, 10, 11, 13, 15, 17, 19, 21, 23, 24, 25], acertos: 9, dezenas_acertadas: [1, 2, 4, 6, 8, 10, 11, 13, 15] },
+      ],
+      maior_acerto: 9,
+      media_acertos: 8,
+      por_acertos: { '11': 0, '12': 0, '13': 0, '14': 0, '15': 0 },
+      aviso: null,
+    },
   ],
 }

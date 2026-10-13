@@ -42,6 +42,12 @@ Itens em ordem de prioridade. Estado: `[ ]` a fazer, `[~]` em andamento, `[x]` f
 - [x] Geração de jogos reproduzível (semente + cópia dos parâmetros).
 - [x] Avaliação de jogos e conferência contra o histórico.
 
+## Fase 6 — Testar estratégia
+- [x] Gravar jogos passa a ser opcional (`gravar: false` mostra sem gravar; ADR-008).
+- [x] Teste de estratégias num concurso passado, com base no concurso anterior
+      (`POST /testes-estrategia`, RF-07).
+- [x] Aba "Testar estratégia" e botão "Gravar jogos" na aba Jogos.
+
 ## Fase 5 — Frontend
 - [x] Projeto Vite + React + TypeScript + Material UI + Recharts.
 - [x] Telas de concursos (com botão Atualizar), estatísticas e perfil dos concursos.

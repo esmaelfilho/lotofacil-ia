@@ -34,12 +34,12 @@ export default function Geracoes({ geracoes, selecionada, aoSelecionar, recemGer
   )
 
   return (
-    <Secao titulo="Jogos gerados" descricao="Clique numa geração para ver os jogos e conferir.">
+    <Secao titulo="Jogos gravados" descricao="Clique numa geração gravada para ver os jogos e conferir com um concurso.">
       <Stack spacing={3}>
         <Estado consulta={geracoes}>
           {({ itens }) =>
             itens.length === 0 ? (
-              <Typography color="text.secondary">Nenhuma geração ainda.</Typography>
+              <Typography color="text.secondary">Nenhum jogo gravado ainda.</Typography>
             ) : (
               <TableContainer sx={{ maxHeight: 280 }}>
                 <Table size="small" stickyHeader>

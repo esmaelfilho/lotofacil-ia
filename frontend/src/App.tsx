@@ -14,6 +14,7 @@ import PaginaConcursos from './paginas/PaginaConcursos'
 import PaginaEstatisticas from './paginas/PaginaEstatisticas'
 import PaginaJogos from './paginas/PaginaJogos'
 import PaginaPerfil from './paginas/PaginaPerfil'
+import PaginaTesteEstrategia from './paginas/PaginaTesteEstrategia'
 
 const tema = createTheme({
   colorSchemes: { light: true, dark: true },
@@ -25,6 +26,7 @@ const ABAS = [
   { nome: 'Estatísticas', Pagina: PaginaEstatisticas },
   { nome: 'Perfil dos concursos', Pagina: PaginaPerfil },
   { nome: 'Jogos', Pagina: PaginaJogos },
+  { nome: 'Testar estratégia', Pagina: PaginaTesteEstrategia },
 ]
 
 export default function App() {

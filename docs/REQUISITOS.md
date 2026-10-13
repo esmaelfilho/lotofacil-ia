@@ -65,11 +65,23 @@ Todas calculadas a partir dos concursos históricos:
 - RF-05.2 Jogos têm de 15 a 20 dezenas (padrão 15), sem repetição de jogo na mesma geração.
 - RF-05.3 A geração guarda uma cópia dos parâmetros usados e a semente, para ser
   reproduzível mesmo que a estratégia mude depois.
+- RF-05.4 Gravar é opcional: os jogos gerados podem ser só mostrados e gravados depois, com
+  os mesmos jogos (mesma semente, mesma base e mesmos parâmetros).
 
 ### RF-06 Avaliação
 - RF-06.1 Conferir jogos gerados contra um concurso e registrar os acertos.
 - RF-06.2 Conferir um jogo contra todo o histórico e mostrar quantas vezes teria feito 11,
   12, 13, 14 e 15 pontos.
+
+### RF-07 Testar estratégia
+- RF-07.1 Escolher um concurso que já saiu e uma ou mais estratégias (e, para comparar, jogos
+  sem estratégia) e ver quantas dezenas cada jogo gerado teria acertado.
+- RF-07.2 Os jogos do teste são gerados como se fosse a véspera do concurso: a base é o
+  concurso anterior, e o resultado testado não é usado para gerar.
+- RF-07.3 O teste mostra, por estratégia, o maior acerto, a média de acertos e quantos jogos
+  fizeram 11, 12, 13, 14 e 15 pontos. Nada é gravado, a não ser que o usuário peça para
+  gravar os jogos de uma estratégia; nesse caso eles são gravados e já conferidos com o
+  concurso testado.
 
 ## 2. Requisitos não funcionais
 

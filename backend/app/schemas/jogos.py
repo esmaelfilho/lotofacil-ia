@@ -61,6 +61,11 @@ class GeracaoEntrada(BaseModel):
     excluidas: list[int] = Field(default_factory=list)
     concurso_base: int | None = Field(None, description="Padrão: o último concurso do banco")
     semente: int | None = Field(None, ge=0, le=2**53, description="Padrão: sorteada")
+    gravar: bool = Field(
+        True,
+        description="false: só mostra os jogos, sem gravar. Para gravar os mesmos jogos depois, "
+        "envie os mesmos parâmetros com a semente e o concurso base devolvidos.",
+    )
 
     @field_validator("obrigatorias")
     @classmethod
@@ -74,7 +79,7 @@ class GeracaoEntrada(BaseModel):
 
 
 class JogoSaida(BaseModel):
-    id: int
+    id: int | None = Field(description="Vazio quando os jogos não foram gravados")
     sequencia: int
     dezenas: list[int]
     perfil: PerfilSaida
@@ -82,8 +87,8 @@ class JogoSaida(BaseModel):
 
 
 class GeracaoResumo(BaseModel):
-    id: int
-    criada_em: datetime
+    id: int | None = Field(description="Vazio quando a geração não foi gravada")
+    criada_em: datetime | None
     estrategia_id: int | None
     estrategia_nome: str | None
     concurso_base: int
@@ -96,6 +101,7 @@ class GeracaoResumo(BaseModel):
 
 
 class GeracaoSaida(GeracaoResumo):
+    gravada: bool = True
     tentativas: int | None = None
     jogos: list[JogoSaida]
 
@@ -131,3 +137,61 @@ class ConferenciaHistoricoSaida(BaseModel):
     por_acertos: dict[int, int]
     maior_acerto: int | None
     ultimo_concurso_com_11_ou_mais: int | None
+
+
+class EntradaTesteEstrategia(BaseModel):
+    concurso: int = Field(ge=1, description="Concurso já sorteado que será testado")
+    estrategia_ids: list[int] = Field(default_factory=list, max_length=10)
+    incluir_aleatorio: bool = Field(True, description="Também testa jogos sem estratégia")
+    quantidade: int = Field(5, ge=1, le=100)
+    dezenas_por_jogo: int = Field(15, ge=15, le=20)
+    obrigatorias: list[int] = Field(default_factory=list)
+    excluidas: list[int] = Field(default_factory=list)
+    semente: int | None = Field(None, ge=0, le=2**53, description="Padrão: sorteada")
+
+    @field_validator("estrategia_ids")
+    @classmethod
+    def _sem_repetir(cls, ids: list[int]) -> list[int]:
+        if len(set(ids)) != len(ids):
+            raise ValueError("estratégia repetida")
+        return ids
+
+    @field_validator("obrigatorias")
+    @classmethod
+    def _obrigatorias(cls, dezenas: list[int]) -> list[int]:
+        return normalizar_dezenas(dezenas, 0, 20)
+
+    @field_validator("excluidas")
+    @classmethod
+    def _excluidas(cls, dezenas: list[int]) -> list[int]:
+        return normalizar_dezenas(dezenas, 0, 10)
+
+
+class JogoTestado(BaseModel):
+    sequencia: int
+    dezenas: list[int]
+    acertos: int
+    dezenas_acertadas: list[int]
+
+
+class ResultadoDoTeste(BaseModel):
+    estrategia_id: int | None = Field(description="Vazio: jogos sem estratégia (aleatórios)")
+    estrategia_nome: str | None
+    regras: list[FaixaSaida]
+    jogos: list[JogoTestado]
+    maior_acerto: int | None
+    media_acertos: float | None
+    por_acertos: dict[int, int] = Field(description="Jogos com 11, 12, 13, 14 e 15 pontos")
+    aviso: str | None = None
+
+
+class SaidaTesteEstrategia(BaseModel):
+    concurso: int
+    dezenas_sorteadas: list[int]
+    concurso_base: int = Field(description="O concurso anterior, usado como base")
+    quantidade: int
+    dezenas_por_jogo: int
+    obrigatorias: list[int]
+    excluidas: list[int]
+    semente: int
+    resultados: list[ResultadoDoTeste]

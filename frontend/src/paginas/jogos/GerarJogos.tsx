@@ -11,7 +11,7 @@ import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 
 import { api } from '../../api/cliente'
-import type { Estrategia, Geracao } from '../../api/tipos'
+import type { Estrategia, GeracaoPrevia } from '../../api/tipos'
 import Secao from '../../componentes/Secao'
 import Volante, { alternar, type Marcadas } from '../../componentes/Volante'
 
@@ -21,7 +21,8 @@ function inteiroOuNulo(texto: string): number | null {
 
 interface Props {
   estrategias: Estrategia[]
-  aoGerar: (geracao: Geracao) => void
+  /** Recebe os jogos gerados, ainda não gravados. */
+  aoGerar: (previa: GeracaoPrevia) => void
 }
 
 export default function GerarJogos({ estrategias, aoGerar }: Props) {
@@ -47,7 +48,7 @@ export default function GerarJogos({ estrategias, aoGerar }: Props) {
     }
     setGerando(true)
     try {
-      const geracao = await api.gerar({
+      const previa = await api.previa({
         estrategia_id: estrategiaId === '' ? null : Number(estrategiaId),
         quantidade: qtd,
         dezenas_por_jogo: dezenas,
@@ -56,7 +57,7 @@ export default function GerarJogos({ estrategias, aoGerar }: Props) {
         concurso_base: inteiroOuNulo(base),
         semente: inteiroOuNulo(semente),
       })
-      aoGerar(geracao)
+      aoGerar(previa)
     } catch (e) {
       setErro(e instanceof Error ? e.message : String(e))
     } finally {
@@ -65,7 +66,7 @@ export default function GerarJogos({ estrategias, aoGerar }: Props) {
   }
 
   return (
-    <Secao titulo="Gerar jogos" descricao="Os jogos são sorteados e só ficam os que passam em todas as regras.">
+    <Secao titulo="Gerar jogos" descricao="Os jogos são sorteados e só ficam os que passam em todas as regras. Depois, grave os que quiser guardar.">
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
         <Stack spacing={2} sx={{ flex: 1, minWidth: 0 }}>
           <FormControl size="small">

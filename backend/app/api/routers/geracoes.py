@@ -14,11 +14,13 @@ from app.schemas.jogos import (
     ConferenciaHistoricoSaida,
     ConferenciaSaida,
     ConferirHistoricoEntrada,
+    EntradaTesteEstrategia,
     GeracaoEntrada,
     GeracaoResumo,
     GeracaoSaida,
+    SaidaTesteEstrategia,
 )
-from app.services import avaliacao, geracao
+from app.services import avaliacao, geracao, teste_estrategia
 from app.services.erros import ErroDeNegocio
 
 router = APIRouter(tags=["jogos"])
@@ -33,7 +35,8 @@ class PaginaGeracoes(BaseModel):
 def gerar_jogos(entrada: GeracaoEntrada, sessao: Session = Depends(obter_sessao)) -> GeracaoSaida:
     """Gera jogos que respeitam a estratégia, as obrigatórias e as excluídas.
 
-    Informe a mesma `semente` e os mesmos parâmetros para obter exatamente os mesmos jogos."""
+    Informe a mesma `semente` e os mesmos parâmetros para obter exatamente os mesmos jogos.
+    Com `gravar: false`, só mostra os jogos, sem gravar."""
     try:
         return geracao.gerar(sessao, entrada)
     except ErroDeNegocio as erro:
@@ -78,3 +81,18 @@ def conferir_historico(
 ) -> ConferenciaHistoricoSaida:
     """Quantas vezes um jogo (15 a 20 dezenas) teria feito 11, 12, 13, 14 e 15 pontos."""
     return avaliacao.conferir_historico(sessao, entrada.dezenas)
+
+
+@router.post("/testes-estrategia", response_model=SaidaTesteEstrategia)
+def testar_estrategias(
+    entrada: EntradaTesteEstrategia, sessao: Session = Depends(obter_sessao)
+) -> SaidaTesteEstrategia:
+    """Gera jogos com cada estratégia como se fosse a véspera de um concurso que já saiu
+    (base: o concurso anterior) e mostra quantas dezenas cada jogo teria acertado.
+
+    Nada é gravado. Para gravar os jogos de uma estratégia, use `POST /geracoes` com os
+    mesmos parâmetros, a `semente` e `concurso_base` devolvidos aqui."""
+    try:
+        return teste_estrategia.testar(sessao, entrada)
+    except ErroDeNegocio as erro:
+        raise http(erro) from None

@@ -12,6 +12,7 @@ import type {
   Frequencia,
   Geracao,
   GeracaoEntrada,
+  GeracaoPrevia,
   Importacao,
   PaginaConcursos,
   PaginaGeracoes,
@@ -19,6 +20,8 @@ import type {
   QuentesFrias,
   Regra,
   ResumoAtualizacao,
+  TesteEstrategia,
+  TesteEstrategiaEntrada,
 } from './tipos'
 
 const BASE = '/api'
@@ -110,7 +113,14 @@ export const api = {
   ativarEstrategia: (id: number, ativa: boolean) =>
     pedir<Estrategia>(montarUrl(`/estrategias/${id}/${ativa ? 'ativar' : 'desativar'}`), 'POST'),
   excluirEstrategia: (id: number) => pedir<null>(montarUrl(`/estrategias/${id}`), 'DELETE'),
-  gerar: (entrada: GeracaoEntrada) => pedir<Geracao>(montarUrl('/geracoes'), 'POST', entrada),
+  /** Gera e grava. */
+  gerar: (entrada: GeracaoEntrada) =>
+    pedir<Geracao>(montarUrl('/geracoes'), 'POST', { ...entrada, gravar: true }),
+  /** Gera só para mostrar, sem gravar. */
+  previa: (entrada: GeracaoEntrada) =>
+    pedir<GeracaoPrevia>(montarUrl('/geracoes'), 'POST', { ...entrada, gravar: false }),
+  testarEstrategias: (entrada: TesteEstrategiaEntrada) =>
+    pedir<TesteEstrategia>(montarUrl('/testes-estrategia'), 'POST', entrada),
   geracoes: (limite = 20, deslocamento = 0) =>
     pedir<PaginaGeracoes>(montarUrl('/geracoes', { limite, deslocamento })),
   geracao: (id: number) => pedir<Geracao>(montarUrl(`/geracoes/${id}`)),

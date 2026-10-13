@@ -217,3 +217,33 @@ def test_perfil_do_jogo_usa_mesma_definicao(com_concursos):
     gerada = geracao.gerar(com_concursos, GeracaoEntrada(quantidade=3, semente=8))
     for j in gerada.jogos:
         assert j.perfil.soma == calcular_perfil(j.dezenas).soma
+
+
+def test_gerar_sem_gravar_e_gravar_depois_repete_os_jogos(com_concursos):
+    sessao = com_concursos
+    estrategia = _estrategia(sessao)
+    antes = sessao.scalar(select(func.count()).select_from(GeracaoJogos))
+
+    previa = geracao.gerar(
+        sessao, GeracaoEntrada(estrategia_id=estrategia.id, quantidade=6, gravar=False)
+    )
+    assert previa.gravada is False and previa.id is None and previa.criada_em is None
+    assert all(j.id is None for j in previa.jogos) and len(previa.jogos) == 6
+    assert sessao.scalar(select(func.count()).select_from(GeracaoJogos)) == antes
+    assert sessao.scalar(select(func.count()).select_from(JogoGerado)) == 0
+    assert not estrategias.obter(sessao, estrategia.id).usada
+
+    gravada = geracao.gerar(
+        sessao,
+        GeracaoEntrada(
+            estrategia_id=estrategia.id,
+            quantidade=6,
+            concurso_base=previa.concurso_base,
+            semente=previa.semente,
+        ),
+    )
+    assert gravada.gravada is True and gravada.id is not None
+    assert [j.dezenas for j in gravada.jogos] == [j.dezenas for j in previa.jogos]
+    assert [j.dezenas for j in geracao.obter(sessao, gravada.id).jogos] == [
+        j.dezenas for j in previa.jogos
+    ]
