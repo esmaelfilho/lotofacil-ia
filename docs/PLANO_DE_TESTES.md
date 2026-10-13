@@ -122,6 +122,8 @@ Fase 1 implementada. Execução em 2026-10-12, no ambiente de desenvolvimento do
   telas com API simulada. No navegador, contra o backend real: gerar sem gravar, gravar,
   testar três opções no concurso 3800 (base 3799) e gravar os jogos de uma estratégia; os
   jogos gravados conferiram com os do teste, e o console não registrou erros.
+- Fase 6 no ambiente do usuário (Windows, Python 3.14.8, PostgreSQL 18.6, Node 24.21.0),
+  2026-10-13: backend **143 passed** e frontend **33 passed**.
 
 Validação anterior, da especificação, num PostgreSQL 16 descartável fora do repositório:
 
